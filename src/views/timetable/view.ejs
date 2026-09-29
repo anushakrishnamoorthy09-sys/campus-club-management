@@ -1,0 +1,92 @@
+<div class="space-y-6">
+  <!-- Header -->
+  <div class="flex flex-col sm:flex-row sm:items-center justify-between border-b border-slate-700 pb-4 gap-4">
+    <div>
+      <h1 class="text-2xl font-bold text-white tracking-tight">Active Academic Timetable</h1>
+      <p class="text-slate-400 text-sm">Official institution timetable structure and period schedules</p>
+    </div>
+    <% if (typeof user !== 'undefined' && user.role === 'SUPER_ADMIN') { %>
+      <a href="/admin/timetable" class="px-3.5 py-2 bg-indigo-600 hover:bg-indigo-500 text-white font-semibold text-xs rounded-xl transition shadow-md shadow-indigo-600/30">
+        ⚙️ Manage Timetable Engine
+      </a>
+    <% } %>
+  </div>
+
+  <% if (!activeStructure || !activeStructure.timetable) { %>
+    <div class="p-8 bg-slate-800/60 border border-slate-700/80 rounded-2xl text-center space-y-3">
+      <div class="text-3xl">📅</div>
+      <h2 class="text-lg font-bold text-white">No Active Timetable Structure Defined</h2>
+      <p class="text-slate-400 text-xs max-w-md mx-auto">
+        There is currently no active academic timetable structure configured in the system for today.
+      </p>
+    </div>
+  <% } else { %>
+    <!-- Active Timetable Details -->
+    <div class="bg-slate-800/80 border border-slate-700/80 rounded-2xl p-6 space-y-6">
+      <div class="flex flex-col sm:flex-row sm:items-center justify-between border-b border-slate-700/60 pb-4 gap-2">
+        <div>
+          <span class="px-2.5 py-0.5 bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 text-xs font-bold rounded-full uppercase">
+            ACTIVE STRUCTURE
+          </span>
+          <h2 class="text-xl font-bold text-white mt-1"><%= activeStructure.timetable.name %></h2>
+          <p class="text-xs text-slate-400 mt-0.5">Academic Scope: <%= activeStructure.timetable.scope %> | Effective From: <%= activeStructure.timetable.effective_from %></p>
+        </div>
+
+        <div>
+          <div class="text-xs text-slate-400 mb-1 font-semibold uppercase tracking-wider">Active Days</div>
+          <div class="flex flex-wrap gap-1">
+            <% (activeStructure.working_days || []).forEach(wd => { %>
+              <span class="px-2 py-0.5 bg-indigo-900/60 text-indigo-300 border border-indigo-700/60 text-xs font-semibold rounded">
+                <%= wd.day_of_week.slice(0, 3) %>
+              </span>
+            <% }) %>
+          </div>
+        </div>
+      </div>
+
+      <!-- Periods Table -->
+      <div class="overflow-x-auto border border-slate-700/80 rounded-xl bg-slate-900/60">
+        <table class="w-full text-left text-sm text-slate-200">
+          <thead class="bg-slate-900 border-b border-slate-700 text-slate-400 text-xs uppercase font-semibold">
+            <tr>
+              <th class="p-3.5 text-center w-16">#</th>
+              <th class="p-3.5">Period Label</th>
+              <th class="p-3.5">Type</th>
+              <th class="p-3.5">Start Time</th>
+              <th class="p-3.5">End Time</th>
+              <th class="p-3.5 text-center">Computed Duration</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-slate-800">
+            <% (activeStructure.periods || []).forEach(p => { %>
+              <tr class="hover:bg-slate-800/40 transition">
+                <td class="p-3.5 text-center font-bold text-slate-400"><%= p.period_number %></td>
+                <td class="p-3.5 font-semibold text-white"><%= p.label %></td>
+                <td class="p-3.5">
+                  <% if (p.type === 'CLASS') { %>
+                    <span class="px-2.5 py-1 bg-indigo-500/10 border border-indigo-500/30 text-indigo-400 text-xs font-bold rounded-lg uppercase">
+                      CLASS
+                    </span>
+                  <% } else if (p.type === 'SHORT_BREAK') { %>
+                    <span class="px-2.5 py-1 bg-amber-500/10 border border-amber-500/30 text-amber-400 text-xs font-bold rounded-lg uppercase">
+                      SHORT BREAK
+                    </span>
+                  <% } else { %>
+                    <span class="px-2.5 py-1 bg-rose-500/10 border border-rose-500/30 text-rose-400 text-xs font-bold rounded-lg uppercase">
+                      LUNCH BREAK
+                    </span>
+                  <% } %>
+                </td>
+                <td class="p-3.5 font-mono text-slate-300"><%= p.start_time %></td>
+                <td class="p-3.5 font-mono text-slate-300"><%= p.end_time %></td>
+                <td class="p-3.5 text-center font-mono font-bold text-indigo-400">
+                  <%= p.duration_minutes %> mins
+                </td>
+              </tr>
+            <% }) %>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  <% } %>
+</div>

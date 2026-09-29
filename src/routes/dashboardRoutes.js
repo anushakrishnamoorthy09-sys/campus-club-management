@@ -66,14 +66,6 @@ router.get('/dashboard/student', requireRole('STUDENT'), (req, res) => {
  * PLACEHOLDER GUARDED FEATURE SHELLS (To be populated in later phases)
  */
 
-// Super Admin Only
-router.get('/admin/timetable', requireRole('SUPER_ADMIN'), (req, res) => {
-  res.render('placeholder', {
-    title: 'Timetable Structure Management - CampusClubOS',
-    featureName: 'Master Timetable Structure Management',
-    roleRequired: 'SUPER_ADMIN'
-  });
-});
 
 // Club Admin Shells
 router.get('/club/events', requireRole('CLUB_ADMIN', 'SUPER_ADMIN', 'ADMIN'), (req, res) => {

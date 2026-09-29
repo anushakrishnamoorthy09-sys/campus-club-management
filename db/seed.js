@@ -154,7 +154,7 @@ async function seedDatabase() {
     const stmtInsertTT = db.prepare(
       'INSERT INTO timetables (name, scope, effective_from, is_active, created_by) VALUES (?, ?, ?, 1, ?)'
     );
-    const ttRes = stmtInsertTT.run('Regular Day - Odd Semester 2026', 'Odd Semester 2026', '2026-08-01', superAdminId);
+    const ttRes = stmtInsertTT.run('Regular Day - 2026', 'Academic Year 2026', '2026-01-01', superAdminId);
     const ttId = ttRes.lastInsertRowid;
 
     // Working days Mon-Fri
@@ -163,14 +163,18 @@ async function seedDatabase() {
       stmtInsertTTDay.run(ttId, day);
     });
 
-    // Periods 1 to 5 + Lunch Break
+    // ~8 Class Periods + Short Break + Lunch Break (Realistic college timings)
     const periods = [
       { num: 1, label: 'Period 1', start: '08:30', end: '09:20', type: 'CLASS' },
       { num: 2, label: 'Period 2', start: '09:25', end: '10:15', type: 'CLASS' },
-      { num: 3, label: 'Period 3', start: '10:20', end: '11:10', type: 'CLASS' },
-      { num: 4, label: 'Lunch Break', start: '11:10', end: '12:00', type: 'LUNCH_BREAK' },
-      { num: 5, label: 'Period 4', start: '12:00', end: '12:50', type: 'CLASS' },
-      { num: 6, label: 'Period 5', start: '12:55', end: '13:45', type: 'CLASS' }
+      { num: 3, label: 'Morning Break', start: '10:15', end: '10:30', type: 'SHORT_BREAK' },
+      { num: 4, label: 'Period 3', start: '10:30', end: '11:20', type: 'CLASS' },
+      { num: 5, label: 'Period 4', start: '11:25', end: '12:15', type: 'CLASS' },
+      { num: 6, label: 'Lunch Break', start: '12:15', end: '13:05', type: 'LUNCH_BREAK' },
+      { num: 7, label: 'Period 5', start: '13:05', end: '13:55', type: 'CLASS' },
+      { num: 8, label: 'Period 6', start: '14:00', end: '14:50', type: 'CLASS' },
+      { num: 9, label: 'Period 7', start: '14:55', end: '15:45', type: 'CLASS' },
+      { num: 10, label: 'Period 8', start: '15:50', end: '16:40', type: 'CLASS' }
     ];
 
     const stmtInsertPeriod = db.prepare(

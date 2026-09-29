@@ -8,7 +8,8 @@
     "dev": "nodemon src/index.js",
     "db:reset": "node db/seed.js",
     "routes": "node scripts/list_routes.js",
-    "test:security": "node scripts/test_security.js"
+    "test:security": "node scripts/test_security.js",
+    "test:unit": "node scratch/test_timetable_module.js"
   },
   "dependencies": {
     "bcrypt": "^5.1.1",

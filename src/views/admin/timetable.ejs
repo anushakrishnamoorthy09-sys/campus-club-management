@@ -1,0 +1,366 @@
+<div class="space-y-8">
+  <!-- Page Header -->
+  <div class="flex flex-col md:flex-row md:items-center justify-between border-b border-slate-700 pb-4 gap-4">
+    <div>
+      <h1 class="text-2xl font-bold text-white tracking-tight">Master Timetable Structure Engine</h1>
+      <p class="text-slate-400 text-sm">Create, edit, activate, and manage institutional academic period definitions</p>
+    </div>
+    <div class="flex items-center space-x-3">
+      <a href="/timetable/view" class="px-3 py-1.5 bg-slate-800 hover:bg-slate-700 border border-slate-700 text-slate-200 text-xs font-semibold rounded-lg transition">
+        👁️ Read-Only View
+      </a>
+      <span class="px-3 py-1.5 bg-rose-500/10 border border-rose-500/20 text-rose-400 font-mono text-xs font-semibold rounded-lg">
+        SUPER_ADMIN EXCLUSIVE
+      </span>
+    </div>
+  </div>
+
+  <!-- Status / Error Alerts -->
+  <% if (typeof error !== 'undefined' && error) { %>
+    <div class="p-4 bg-rose-500/10 border border-rose-500/30 rounded-xl text-rose-400 text-sm font-medium">
+      <div class="font-bold mb-1">⚠️ Validation / Operation Blocked:</div>
+      <div><%= error %></div>
+    </div>
+  <% } %>
+
+  <% if (typeof warnings !== 'undefined' && warnings && warnings.length > 0) { %>
+    <div class="p-4 bg-amber-500/10 border border-amber-500/30 rounded-xl text-amber-400 text-sm font-medium">
+      <div class="font-bold mb-1">⚡ Unscheduled Period Gap Warnings:</div>
+      <ul class="list-disc list-inside space-y-1">
+        <% warnings.forEach(w => { %>
+          <li><%= w %></li>
+        <% }) %>
+      </ul>
+    </div>
+  <% } %>
+
+  <!-- Grid: Timetable Form & Structure List -->
+  <div class="grid grid-cols-1 lg:grid-cols-12 gap-8">
+    
+    <!-- Left Column: Form (Create or Edit) -->
+    <div class="lg:col-span-7 bg-slate-800/80 border border-slate-700/80 rounded-2xl p-6 space-y-6">
+      <div class="flex items-center justify-between border-b border-slate-700/60 pb-3">
+        <h2 class="text-lg font-bold text-white">
+          <%= editTimetable ? 'Edit Timetable Structure #' + editTimetable.id : 'Create New Timetable Structure' %>
+        </h2>
+        <% if (editTimetable) { %>
+          <a href="/admin/timetable" class="text-xs text-indigo-400 hover:text-indigo-300 font-semibold">+ Create New Instead</a>
+        <% } %>
+      </div>
+
+      <form id="timetableForm" action="<%= editTimetable ? '/admin/timetable/' + editTimetable.id + '/update' : '/admin/timetable' %>" method="POST" class="space-y-5">
+        <input type="hidden" name="_csrf" value="<%= typeof csrfToken !== 'undefined' ? csrfToken : '' %>">
+        <input type="hidden" id="periodsJsonInput" name="periods_json" value="">
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div>
+            <label class="block text-xs font-semibold text-slate-300 uppercase tracking-wider mb-1.5">Structure Name</label>
+            <input type="text" name="name" required placeholder="e.g. Regular Day - 2026" 
+              value="<%= editTimetable ? editTimetable.name : '' %>"
+              class="w-full px-3.5 py-2.5 bg-slate-900 border border-slate-700 rounded-xl text-white text-sm focus:outline-none focus:border-indigo-500">
+          </div>
+
+          <div>
+            <label class="block text-xs font-semibold text-slate-300 uppercase tracking-wider mb-1.5">Academic Scope</label>
+            <input type="text" name="scope" required placeholder="e.g. Academic Year 2026" 
+              value="<%= editTimetable ? editTimetable.scope : '' %>"
+              class="w-full px-3.5 py-2.5 bg-slate-900 border border-slate-700 rounded-xl text-white text-sm focus:outline-none focus:border-indigo-500">
+          </div>
+        </div>
+
+        <div>
+          <label class="block text-xs font-semibold text-slate-300 uppercase tracking-wider mb-1.5">Effective From Date</label>
+          <input type="date" name="effective_from" required 
+            value="<%= editTimetable ? editTimetable.effective_from : new Date().toISOString().split('T')[0] %>"
+            class="w-full sm:w-1/2 px-3.5 py-2.5 bg-slate-900 border border-slate-700 rounded-xl text-white text-sm focus:outline-none focus:border-indigo-500">
+        </div>
+
+        <!-- Working Days Selection -->
+        <div>
+          <label class="block text-xs font-semibold text-slate-300 uppercase tracking-wider mb-2">Active Working Days</label>
+          <div class="flex flex-wrap gap-2">
+            <% const days = ['MONDAY', 'TUESDAY', 'WEDNESDAY', 'THURSDAY', 'FRIDAY', 'SATURDAY', 'SUNDAY']; %>
+            <% const activeDaysSet = new Set(editTimetable ? editTimetable.working_days.map(d => d.day_of_week) : ['MONDAY', 'TUESDAY', 'WEDNESDAY', 'THURSDAY', 'FRIDAY']); %>
+            <% days.forEach(day => { %>
+              <label class="flex items-center space-x-2 bg-slate-900/80 border border-slate-700 px-3 py-1.5 rounded-lg cursor-pointer hover:border-slate-500 transition">
+                <input type="checkbox" name="working_days" value="<%= day %>" <%= activeDaysSet.has(day) ? 'checked' : '' %> class="rounded bg-slate-800 border-slate-700 text-indigo-600 focus:ring-0">
+                <span class="text-xs font-medium text-slate-200"><%= day.slice(0, 3) %></span>
+              </label>
+            <% }) %>
+          </div>
+        </div>
+
+        <!-- Dynamic Period Editor Table -->
+        <div>
+          <div class="flex items-center justify-between mb-2">
+            <label class="block text-xs font-semibold text-slate-300 uppercase tracking-wider">Timetable Periods & Breaks</label>
+            <button type="button" id="addPeriodBtn" class="px-2.5 py-1 bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-semibold rounded-lg transition">
+              + Add Period
+            </button>
+          </div>
+
+          <div class="overflow-x-auto border border-slate-700/80 rounded-xl bg-slate-900/50">
+            <table class="w-full text-left text-xs text-slate-300">
+              <thead class="bg-slate-900 border-b border-slate-700 text-slate-400 font-semibold uppercase">
+                <tr>
+                  <th class="p-2.5 w-12 text-center">#</th>
+                  <th class="p-2.5">Label</th>
+                  <th class="p-2.5 w-28">Type</th>
+                  <th class="p-2.5 w-24">Start</th>
+                  <th class="p-2.5 w-24">End</th>
+                  <th class="p-2.5 w-24 text-center">Duration</th>
+                  <th class="p-2.5 w-12 text-center"></th>
+                </tr>
+              </thead>
+              <tbody id="periodTableBody" class="divide-y divide-slate-800">
+                <!-- Rows injected dynamically via JS -->
+              </tbody>
+            </table>
+          </div>
+          <div id="liveValidationMessage" class="mt-2 text-xs font-medium hidden"></div>
+        </div>
+
+        <div class="flex items-center justify-end space-x-3 pt-4 border-t border-slate-700/60">
+          <% if (editTimetable) { %>
+            <a href="/admin/timetable" class="px-4 py-2 bg-slate-700 hover:bg-slate-600 text-slate-200 text-xs font-semibold rounded-xl transition">
+              Cancel
+            </a>
+          <% } %>
+          <button type="submit" class="px-5 py-2.5 bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-bold uppercase tracking-wider rounded-xl transition shadow-lg shadow-indigo-600/30">
+            <%= editTimetable ? 'Save Structure Changes' : 'Create Timetable Structure' %>
+          </button>
+        </div>
+      </form>
+    </div>
+
+    <!-- Right Column: List of Existing Timetables -->
+    <div class="lg:col-span-5 space-y-6">
+      <div class="bg-slate-800/80 border border-slate-700/80 rounded-2xl p-6 space-y-4">
+        <h2 class="text-lg font-bold text-white border-b border-slate-700/60 pb-3">Existing Timetable Structures</h2>
+
+        <% if (!timetables || timetables.length === 0) { %>
+          <p class="text-slate-400 text-xs py-4 text-center">No timetable structures created yet.</p>
+        <% } else { %>
+          <div class="space-y-4 max-h-[600px] overflow-y-auto pr-1">
+            <% timetables.forEach(tt => { %>
+              <div class="p-4 bg-slate-900/80 border <%= tt.is_active ? 'border-emerald-500/40 bg-emerald-950/10' : 'border-slate-700/70' %> rounded-xl space-y-3">
+                <div class="flex items-start justify-between">
+                  <div>
+                    <div class="flex items-center space-x-2">
+                      <span class="font-bold text-white text-sm"><%= tt.name %></span>
+                      <% if (tt.is_active) { %>
+                        <span class="px-2 py-0.5 bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 text-[10px] font-bold rounded-full uppercase">
+                          ACTIVE
+                        </span>
+                      <% } else { %>
+                        <span class="px-2 py-0.5 bg-slate-700 text-slate-400 text-[10px] font-bold rounded-full uppercase">
+                          INACTIVE
+                        </span>
+                      <% } %>
+                    </div>
+                    <div class="text-xs text-slate-400 mt-1">Scope: <%= tt.scope %> | Effective: <%= tt.effective_from %></div>
+                  </div>
+                  <span class="text-[11px] text-slate-400 font-mono"><%= tt.period_count %> Periods</span>
+                </div>
+
+                <!-- Active Working Days -->
+                <div class="flex flex-wrap gap-1">
+                  <% (tt.working_days || []).forEach(wd => { %>
+                    <span class="px-2 py-0.5 <%= wd.is_active ? 'bg-indigo-900/60 text-indigo-300 border border-indigo-700/60' : 'bg-slate-800 text-slate-400' %> text-[10px] font-semibold rounded">
+                      <%= wd.day_of_week.slice(0, 3) %>
+                    </span>
+                  <% }) %>
+                </div>
+
+                <!-- Action Controls -->
+                <div class="flex items-center justify-between pt-2 border-t border-slate-800/80 text-xs">
+                  <a href="/admin/timetable?edit=<%= tt.id %>" class="text-indigo-400 hover:text-indigo-300 font-semibold">
+                    ✏️ Edit
+                  </a>
+
+                  <div class="flex items-center space-x-2">
+                    <% if (tt.is_active) { %>
+                      <form action="/admin/timetable/<%= tt.id %>/deactivate" method="POST" class="inline">
+                        <input type="hidden" name="_csrf" value="<%= typeof csrfToken !== 'undefined' ? csrfToken : '' %>">
+                        <button type="submit" class="px-2.5 py-1 bg-amber-500/10 border border-amber-500/30 text-amber-400 hover:bg-amber-500/20 text-[11px] font-semibold rounded-lg transition">
+                          Deactivate
+                        </button>
+                      </form>
+                    <% } else { %>
+                      <form action="/admin/timetable/<%= tt.id %>/activate" method="POST" class="inline">
+                        <input type="hidden" name="_csrf" value="<%= typeof csrfToken !== 'undefined' ? csrfToken : '' %>">
+                        <button type="submit" class="px-2.5 py-1 bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 hover:bg-emerald-500/20 text-[11px] font-semibold rounded-lg transition">
+                          Activate
+                        </button>
+                      </form>
+                    <% } %>
+
+                    <form action="/admin/timetable/<%= tt.id %>/delete" method="POST" class="inline" onsubmit="return confirm('Are you sure you want to delete this timetable structure?');">
+                      <input type="hidden" name="_csrf" value="<%= typeof csrfToken !== 'undefined' ? csrfToken : '' %>">
+                      <button type="submit" class="px-2.5 py-1 bg-rose-500/10 border border-rose-500/30 text-rose-400 hover:bg-rose-500/20 text-[11px] font-semibold rounded-lg transition">
+                        Delete
+                      </button>
+                    </form>
+                  </div>
+                </div>
+              </div>
+            <% }) %>
+          </div>
+        <% } %>
+      </div>
+
+      <!-- Audit Logs Table -->
+      <div class="bg-slate-800/80 border border-slate-700/80 rounded-2xl p-6 space-y-4">
+        <h2 class="text-sm font-bold text-white uppercase tracking-wider border-b border-slate-700/60 pb-2">
+          📜 Timetable Audit Trail
+        </h2>
+
+        <% if (!auditLogs || auditLogs.length === 0) { %>
+          <p class="text-slate-400 text-xs py-2 text-center">No timetable audit logs recorded yet.</p>
+        <% } else { %>
+          <div class="space-y-2 max-h-[300px] overflow-y-auto pr-1">
+            <% auditLogs.forEach(log => { %>
+              <div class="p-2.5 bg-slate-900/60 border border-slate-800 rounded-lg text-xs space-y-1">
+                <div class="flex items-center justify-between text-slate-300">
+                  <span class="font-bold text-indigo-400"><%= log.action %></span>
+                  <span class="text-[10px] text-slate-400 font-mono"><%= new Date(log.timestamp).toLocaleString() %></span>
+                </div>
+                <div class="text-slate-400">By: <span class="text-slate-200"><%= log.actor_name %> (<%= log.actor_role %>)</span></div>
+                <% if (log.details_json) { %>
+                  <div class="text-[10px] text-slate-400 font-mono bg-slate-950/60 p-1.5 rounded overflow-x-auto"><%= log.details_json %></div>
+                <% } %>
+              </div>
+            <% }) %>
+          </div>
+        <% } %>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Dynamic Period Table Client Script -->
+<script>
+  (function() {
+    const defaultPeriods = <%= editTimetable && editTimetable.periods ? JSON.stringify(editTimetable.periods) : JSON.stringify([
+      { period_number: 1, label: 'Period 1', start_time: '08:30', end_time: '09:20', type: 'CLASS' },
+      { period_number: 2, label: 'Period 2', start_time: '09:25', end_time: '10:15', type: 'CLASS' },
+      { period_number: 3, label: 'Morning Break', start_time: '10:15', end_time: '10:30', type: 'SHORT_BREAK' },
+      { period_number: 4, label: 'Period 3', start_time: '10:30', end_time: '11:20', type: 'CLASS' },
+      { period_number: 5, label: 'Period 4', start_time: '11:25', end_time: '12:15', type: 'CLASS' },
+      { period_number: 6, label: 'Lunch Break', start_time: '12:15', end_time: '13:05', type: 'LUNCH_BREAK' },
+      { period_number: 7, label: 'Period 5', start_time: '13:05', end_time: '13:55', type: 'CLASS' },
+      { period_number: 8, label: 'Period 6', start_time: '14:00', end_time: '14:50', type: 'CLASS' },
+      { period_number: 9, label: 'Period 7', start: '14:55', end_time: '15:45', type: 'CLASS' },
+      { period_number: 10, label: 'Period 8', start_time: '15:50', end_time: '16:40', type: 'CLASS' }
+    ]) %>;
+
+    const tbody = document.getElementById('periodTableBody');
+    const addBtn = document.getElementById('addPeriodBtn');
+    const form = document.getElementById('timetableForm');
+    const jsonInput = document.getElementById('periodsJsonInput');
+    const msgDiv = document.getElementById('liveValidationMessage');
+
+    function calcDuration(start, end) {
+      if (!start || !end) return 0;
+      const [sH, sM] = start.split(':').map(Number);
+      const [eH, eM] = end.split(':').map(Number);
+      if (isNaN(sH) || isNaN(sM) || isNaN(eH) || isNaN(eM)) return 0;
+      return (eH * 60 + eM) - (sH * 60 + sM);
+    }
+
+    function renderRow(p, idx) {
+      const tr = document.createElement('tr');
+      tr.className = 'hover:bg-slate-800/40 transition';
+      tr.innerHTML = `
+        <td class="p-2 text-center font-bold text-slate-400">
+          <input type="number" value="${p.period_number || (idx + 1)}" min="1" class="period-num w-10 text-center bg-slate-800 border border-slate-700 rounded text-white text-xs p-1">
+        </td>
+        <td class="p-2">
+          <input type="text" value="${p.label || 'Period ' + (idx + 1)}" class="period-label w-full bg-slate-800 border border-slate-700 rounded text-white text-xs p-1">
+        </td>
+        <td class="p-2">
+          <select class="period-type w-full bg-slate-800 border border-slate-700 rounded text-white text-xs p-1">
+            <option value="CLASS" ${p.type === 'CLASS' ? 'selected' : ''}>CLASS</option>
+            <option value="SHORT_BREAK" ${p.type === 'SHORT_BREAK' ? 'selected' : ''}>SHORT_BREAK</option>
+            <option value="LUNCH_BREAK" ${p.type === 'LUNCH_BREAK' ? 'selected' : ''}>LUNCH_BREAK</option>
+          </select>
+        </td>
+        <td class="p-2">
+          <input type="time" value="${p.start_time || '08:30'}" class="period-start w-full bg-slate-800 border border-slate-700 rounded text-white text-xs p-1">
+        </td>
+        <td class="p-2">
+          <input type="time" value="${p.end_time || '09:20'}" class="period-end w-full bg-slate-800 border border-slate-700 rounded text-white text-xs p-1">
+        </td>
+        <td class="p-2 text-center font-mono font-semibold duration-cell text-indigo-400">
+          ${calcDuration(p.start_time, p.end_time)} mins
+        </td>
+        <td class="p-2 text-center">
+          <button type="button" class="remove-row-btn text-rose-400 hover:text-rose-300 font-bold text-sm">✕</button>
+        </td>
+      `;
+      tbody.appendChild(tr);
+
+      // Event listeners for dynamic duration updates
+      const startIn = tr.querySelector('.period-start');
+      const endIn = tr.querySelector('.period-end');
+      const durCell = tr.querySelector('.duration-cell');
+
+      function updateDur() {
+        const dur = calcDuration(startIn.value, endIn.value);
+        durCell.textContent = dur + ' mins';
+        if (dur <= 0) {
+          durCell.className = 'p-2 text-center font-mono font-semibold duration-cell text-rose-400';
+        } else {
+          durCell.className = 'p-2 text-center font-mono font-semibold duration-cell text-indigo-400';
+        }
+      }
+
+      startIn.addEventListener('input', updateDur);
+      endIn.addEventListener('input', updateDur);
+
+      tr.querySelector('.remove-row-btn').addEventListener('click', function() {
+        tr.remove();
+        reindexRows();
+      });
+    }
+
+    function reindexRows() {
+      const rows = tbody.querySelectorAll('tr');
+      rows.forEach((r, idx) => {
+        const numInput = r.querySelector('.period-num');
+        if (!numInput.value || Number(numInput.value) === idx) {
+          numInput.value = idx + 1;
+        }
+      });
+    }
+
+    defaultPeriods.forEach((p, idx) => renderRow(p, idx));
+
+    addBtn.addEventListener('click', function() {
+      const count = tbody.querySelectorAll('tr').length;
+      renderRow({
+        period_number: count + 1,
+        label: 'Period ' + (count + 1),
+        start_time: '16:00',
+        end_time: '16:50',
+        type: 'CLASS'
+      }, count);
+    });
+
+    form.addEventListener('submit', function(e) {
+      const rows = tbody.querySelectorAll('tr');
+      const periods = [];
+      rows.forEach((r, idx) => {
+        periods.push({
+          period_number: Number(r.querySelector('.period-num').value) || (idx + 1),
+          label: r.querySelector('.period-label').value.trim(),
+          type: r.querySelector('.period-type').value,
+          start_time: r.querySelector('.period-start').value,
+          end_time: r.querySelector('.period-end').value
+        });
+      });
+
+      jsonInput.value = JSON.stringify(periods);
+    });
+  })();
+</script>
