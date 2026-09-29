@@ -1,0 +1,21 @@
+# Environment & Secret files
+.env
+.env.local
+
+# Dependency directories
+node_modules/
+
+# SQLite Database files
+*.db
+*.db-journal
+*.db-shm
+*.db-wal
+
+# Logs
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# OS Files
+.DS_Store
+Thumbs.db

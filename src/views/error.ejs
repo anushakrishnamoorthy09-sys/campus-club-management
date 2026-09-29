@@ -1,0 +1,15 @@
+<div class="max-w-md mx-auto text-center py-16">
+  <div class="inline-flex items-center justify-center w-20 h-20 rounded-2xl bg-rose-500/10 text-rose-400 text-3xl font-extrabold mb-6 border border-rose-500/20">
+    500
+  </div>
+  <h1 class="text-3xl font-bold text-white mb-2">Internal System Error</h1>
+  <p class="text-slate-400 text-sm mb-6">
+    <%= typeof message !== 'undefined' ? message : 'An unexpected system error occurred.' %>
+  </p>
+  <% if (typeof error !== 'undefined' && error && process.env.NODE_ENV !== 'production') { %>
+    <pre class="text-left bg-slate-950 p-4 rounded-lg text-rose-300 text-xs overflow-x-auto mb-6 border border-slate-800"><%= error.stack %></pre>
+  <% } %>
+  <a href="/" class="inline-flex items-center px-4 py-2 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white font-medium text-sm transition">
+    Return to Home
+  </a>
+</div>

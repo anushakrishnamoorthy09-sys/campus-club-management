@@ -1,0 +1,167 @@
+<div class="max-w-xl mx-auto py-8">
+  <div class="bg-slate-800/60 border border-slate-700/60 rounded-2xl p-6 sm:p-8 shadow-xl">
+    
+    <div class="text-center mb-8">
+      <div class="inline-flex items-center justify-center w-12 h-12 rounded-xl bg-indigo-600 text-white font-black text-2xl mb-3 shadow-lg shadow-indigo-500/20">
+        C
+      </div>
+      <h2 class="text-2xl font-bold text-white tracking-tight">Student Account Registration</h2>
+      <p class="text-sm text-slate-400 mt-1">Create your official student account bound to your RA Number</p>
+    </div>
+
+    <% if (error) { %>
+      <div class="mb-6 p-4 rounded-xl bg-rose-500/10 border border-rose-500/20 text-rose-400 text-sm flex items-center space-x-2">
+        <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+        <span><%= error %></span>
+      </div>
+    <% } %>
+
+    <form action="/register" method="POST" class="space-y-4">
+      <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+
+      <!-- Full Name & Email -->
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <div>
+          <label for="fullName" class="block text-xs font-semibold text-slate-300 uppercase tracking-wider mb-1.5">Full Name *</label>
+          <input 
+            type="text" 
+            id="fullName" 
+            name="fullName" 
+            value="<%= typeof formData !== 'undefined' && formData.fullName ? formData.fullName : '' %>"
+            required 
+            placeholder="John Doe"
+            class="w-full px-3.5 py-2.5 bg-slate-900 border border-slate-700 rounded-xl text-white placeholder-slate-500 text-sm focus:outline-none focus:border-indigo-500 transition"
+          >
+        </div>
+
+        <div>
+          <label for="email" class="block text-xs font-semibold text-slate-300 uppercase tracking-wider mb-1.5">Institutional Email *</label>
+          <input 
+            type="email" 
+            id="email" 
+            name="email" 
+            value="<%= typeof formData !== 'undefined' && formData.email ? formData.email : '' %>"
+            required 
+            placeholder="student@campus.edu"
+            class="w-full px-3.5 py-2.5 bg-slate-900 border border-slate-700 rounded-xl text-white placeholder-slate-500 text-sm focus:outline-none focus:border-indigo-500 transition"
+          >
+        </div>
+      </div>
+
+      <!-- Password & RA Number -->
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <div>
+          <label for="password" class="block text-xs font-semibold text-slate-300 uppercase tracking-wider mb-1.5">Password *</label>
+          <input 
+            type="password" 
+            id="password" 
+            name="password" 
+            required 
+            placeholder="Min 6 characters"
+            class="w-full px-3.5 py-2.5 bg-slate-900 border border-slate-700 rounded-xl text-white placeholder-slate-500 text-sm focus:outline-none focus:border-indigo-500 transition"
+          >
+        </div>
+
+        <div>
+          <label for="raNumber" class="block text-xs font-semibold text-slate-300 uppercase tracking-wider mb-1.5">RA Number (15 Alphanumeric) *</label>
+          <input 
+            type="text" 
+            id="raNumber" 
+            name="raNumber" 
+            maxlength="15"
+            value="<%= typeof formData !== 'undefined' && formData.raNumber ? formData.raNumber : '' %>"
+            required 
+            placeholder="RA2311003010001"
+            class="w-full px-3.5 py-2.5 bg-slate-900 border border-slate-700 rounded-xl text-white placeholder-slate-500 text-sm font-mono tracking-wider focus:outline-none focus:border-indigo-500 transition uppercase"
+            oninput="this.value = this.value.toUpperCase();"
+          >
+        </div>
+      </div>
+
+      <!-- Department & Section -->
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <div>
+          <label for="department" class="block text-xs font-semibold text-slate-300 uppercase tracking-wider mb-1.5">Department *</label>
+          <input 
+            type="text" 
+            id="department" 
+            name="department" 
+            value="<%= typeof formData !== 'undefined' && formData.department ? formData.department : 'Computer Science' %>"
+            required 
+            placeholder="Computer Science"
+            class="w-full px-3.5 py-2.5 bg-slate-900 border border-slate-700 rounded-xl text-white placeholder-slate-500 text-sm focus:outline-none focus:border-indigo-500 transition"
+          >
+        </div>
+
+        <div>
+          <label for="section" class="block text-xs font-semibold text-slate-300 uppercase tracking-wider mb-1.5">Section *</label>
+          <input 
+            type="text" 
+            id="section" 
+            name="section" 
+            value="<%= typeof formData !== 'undefined' && formData.section ? formData.section : 'A' %>"
+            required 
+            placeholder="A"
+            class="w-full px-3.5 py-2.5 bg-slate-900 border border-slate-700 rounded-xl text-white placeholder-slate-500 text-sm focus:outline-none focus:border-indigo-500 transition"
+          >
+        </div>
+      </div>
+
+      <!-- Year of Study & Class Mentor Selection -->
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <div>
+          <label for="yearOfStudy" class="block text-xs font-semibold text-slate-300 uppercase tracking-wider mb-1.5">Year of Study *</label>
+          <select 
+            id="yearOfStudy" 
+            name="yearOfStudy" 
+            required
+            class="w-full px-3.5 py-2.5 bg-slate-900 border border-slate-700 rounded-xl text-white text-sm focus:outline-none focus:border-indigo-500 transition"
+          >
+            <option value="1" <%= typeof formData !== 'undefined' && formData.yearOfStudy == 1 ? 'selected' : '' %>>1st Year</option>
+            <option value="2" <%= typeof formData !== 'undefined' && formData.yearOfStudy == 2 ? 'selected' : '' %>>2nd Year</option>
+            <option value="3" <%= typeof formData !== 'undefined' && formData.yearOfStudy == 3 ? 'selected' : 'selected' %>>3rd Year</option>
+            <option value="4" <%= typeof formData !== 'undefined' && formData.yearOfStudy == 4 ? 'selected' : '' %>>4th Year</option>
+            <option value="5" <%= typeof formData !== 'undefined' && formData.yearOfStudy == 5 ? 'selected' : '' %>>5th Year</option>
+          </select>
+        </div>
+
+        <div>
+          <label for="classMentorId" class="block text-xs font-semibold text-slate-300 uppercase tracking-wider mb-1.5">Assigned Class Mentor *</label>
+          <select 
+            id="classMentorId" 
+            name="classMentorId" 
+            required
+            class="w-full px-3.5 py-2.5 bg-slate-900 border border-slate-700 rounded-xl text-white text-sm focus:outline-none focus:border-indigo-500 transition"
+          >
+            <option value="">Select Faculty Mentor</option>
+            <% if (typeof facultyMentors !== 'undefined' && facultyMentors.length > 0) { %>
+              <% facultyMentors.forEach(function(faculty) { %>
+                <option 
+                  value="<%= faculty.faculty_user_id %>"
+                  <%= typeof formData !== 'undefined' && formData.classMentorId == faculty.faculty_user_id ? 'selected' : '' %>
+                >
+                  <%= faculty.full_name %> (<%= faculty.department %> - <%= faculty.designation %>)
+                </option>
+              <% }); %>
+            <% } %>
+          </select>
+        </div>
+      </div>
+
+      <div class="pt-2">
+        <button 
+          type="submit" 
+          class="w-full py-3 px-4 bg-indigo-600 hover:bg-indigo-500 text-white font-semibold rounded-xl text-sm transition shadow-lg shadow-indigo-600/30 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+        >
+          Complete Student Registration
+        </button>
+      </div>
+    </form>
+
+    <div class="mt-6 pt-6 border-t border-slate-700/60 text-center text-xs text-slate-400">
+      Already registered? 
+      <a href="/login" class="text-indigo-400 hover:text-indigo-300 font-semibold transition">Sign In Instead</a>
+    </div>
+
+  </div>
+</div>

@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title><%= typeof title !== 'undefined' ? title : 'CampusClubOS' %></title>
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    body { font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif; }
+  </style>
+</head>
+<body class="bg-slate-900 text-slate-100 min-h-screen flex flex-col">
+
+  <!-- Mobile-Responsive Navigation Header -->
+  <header class="bg-slate-800/80 backdrop-blur border-b border-slate-700 sticky top-0 z-50">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div class="flex items-center justify-between h-16">
+        <div class="flex items-center space-x-3">
+          <a href="/" class="flex items-center space-x-2">
+            <span class="bg-indigo-600 text-white font-black text-xl px-2.5 py-1 rounded-lg shadow-md shadow-indigo-600/30">C</span>
+            <span class="font-bold text-lg tracking-tight text-white">Campus<span class="text-indigo-400">ClubOS</span></span>
+          </a>
+        </div>
+        
+        <!-- Navigation & Session User Info -->
+        <div class="flex items-center space-x-4">
+          <% if (typeof user !== 'undefined' && user) { %>
+            <div class="flex items-center space-x-3">
+              <div class="text-right hidden sm:block">
+                <div class="text-sm font-semibold text-white"><%= user.full_name %></div>
+                <div class="text-xs text-indigo-400 font-mono"><%= user.role %> <%= user.ra_number ? '• ' + user.ra_number : '' %></div>
+              </div>
+              <form action="/logout" method="POST" class="inline">
+                <input type="hidden" name="_csrf" value="<%= typeof csrfToken !== 'undefined' ? csrfToken : '' %>">
+                <button type="submit" class="px-3 py-1.5 bg-slate-700 hover:bg-slate-600 text-slate-200 hover:text-white text-xs font-semibold rounded-lg transition border border-slate-600">
+                  Logout
+                </button>
+              </form>
+            </div>
+          <% } else { %>
+            <div class="flex items-center space-x-3">
+              <a href="/login" class="text-slate-300 hover:text-white font-medium text-xs sm:text-sm transition">Sign In</a>
+              <a href="/register" class="px-3.5 py-1.5 bg-indigo-600 hover:bg-indigo-500 text-white font-semibold text-xs sm:text-sm rounded-lg transition shadow-md shadow-indigo-600/30">
+                Register Student
+              </a>
+            </div>
+          <% } %>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <!-- Main Content Container -->
+  <main class="flex-grow max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <%- body %>
+  </main>
+
+  <!-- Footer -->
+  <footer class="bg-slate-950 border-t border-slate-800 py-6 text-center text-slate-500 text-xs">
+    <div class="max-w-7xl mx-auto px-4">
+      <p>&copy; 2026 CampusClubOS. All institutional authorization rules server-side enforced.</p>
+    </div>
+  </footer>
+
+</body>
+</html>

@@ -1,0 +1,31 @@
+<div class="max-w-3xl mx-auto py-12">
+  <div class="bg-slate-800/60 border border-slate-700/60 rounded-2xl p-8 shadow-xl">
+    <div class="flex items-center space-x-3 mb-4">
+      <span class="px-3 py-1 bg-indigo-500/10 border border-indigo-500/20 text-indigo-400 font-mono text-xs font-semibold rounded-lg">
+        REQUIRED PERMISSION: <%= typeof roleRequired !== 'undefined' ? roleRequired : 'GUARDED' %>
+      </span>
+      <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+        SERVER-SIDE GUARD ACTIVE ✓
+      </span>
+    </div>
+
+    <h1 class="text-3xl font-extrabold text-white tracking-tight mb-2">
+      <%= typeof featureName !== 'undefined' ? featureName : 'Feature Shell' %>
+    </h1>
+    <p class="text-slate-400 text-sm mb-6">
+      This route is strictly guarded by server-side role and scope middleware. Feature CRUD operations will be populated in subsequent phases.
+    </p>
+
+    <div class="p-4 bg-slate-900 border border-slate-700/60 rounded-xl font-mono text-xs text-slate-300 space-y-2 mb-6">
+      <div><span class="text-slate-500">Authenticated User:</span> <%= user ? user.full_name : 'None' %></div>
+      <div><span class="text-slate-500">System Role:</span> <%= user ? user.role : 'None' %></div>
+      <% if (user && user.ra_number) { %>
+        <div><span class="text-slate-500">Student RA Number:</span> <%= user.ra_number %></div>
+      <% } %>
+    </div>
+
+    <a href="/dashboard" class="inline-flex items-center px-4 py-2 bg-indigo-600 hover:bg-indigo-500 text-white font-semibold text-sm rounded-xl transition">
+      &larr; Back to Dashboard
+    </a>
+  </div>
+</div>

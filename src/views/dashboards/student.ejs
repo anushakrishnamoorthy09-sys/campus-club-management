@@ -1,0 +1,44 @@
+<div class="space-y-6">
+  <div class="flex items-center justify-between border-b border-slate-700 pb-4">
+    <div>
+      <h1 class="text-2xl font-bold text-white tracking-tight">Student Hub</h1>
+      <p class="text-slate-400 text-sm">Browse approved events, track event registrations, apply for ODs, and collect certificates</p>
+    </div>
+    <span class="px-3 py-1 bg-sky-500/10 border border-sky-500/20 text-sky-400 font-mono text-xs font-semibold rounded-lg">
+      STUDENT SCOPE (<%= user.ra_number %>)
+    </span>
+  </div>
+
+  <!-- Role Navigation Menu -->
+  <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+    <a href="/student/events" class="p-5 bg-slate-800/60 border border-slate-700/60 hover:border-sky-500/50 rounded-xl transition group">
+      <div class="text-sky-400 group-hover:text-sky-300 text-xs font-bold uppercase tracking-wider mb-1">Campus Events</div>
+      <div class="text-white font-semibold text-lg">Browse & Register</div>
+      <p class="text-slate-400 text-xs mt-2">View published faculty-approved club events and register</p>
+    </a>
+
+    <a href="/student/my-registrations" class="p-5 bg-slate-800/60 border border-slate-700/60 hover:border-sky-500/50 rounded-xl transition group">
+      <div class="text-sky-400 group-hover:text-sky-300 text-xs font-bold uppercase tracking-wider mb-1">Registrations</div>
+      <div class="text-white font-semibold text-lg">My Registrations</div>
+      <p class="text-slate-400 text-xs mt-2">View active event registrations and check-in QR</p>
+    </a>
+
+    <a href="/student/od" class="p-5 bg-slate-800/60 border border-slate-700/60 hover:border-sky-500/50 rounded-xl transition group">
+      <div class="text-sky-400 group-hover:text-sky-300 text-xs font-bold uppercase tracking-wider mb-1">On-Duty Applications</div>
+      <div class="text-white font-semibold text-lg">Apply & Track OD</div>
+      <p class="text-slate-400 text-xs mt-2">Apply for OD for registered events and track mentor status</p>
+    </a>
+
+    <a href="/student/certificates" class="p-5 bg-slate-800/60 border border-slate-700/60 hover:border-sky-500/50 rounded-xl transition group">
+      <div class="text-sky-400 group-hover:text-sky-300 text-xs font-bold uppercase tracking-wider mb-1">Certificates</div>
+      <div class="text-white font-semibold text-lg">My Certificates</div>
+      <p class="text-slate-400 text-xs mt-2">Download verifiable PDF certificates for attended events</p>
+    </a>
+
+    <a href="/student/badges" class="p-5 bg-slate-800/60 border border-slate-700/60 hover:border-sky-500/50 rounded-xl transition group">
+      <div class="text-sky-400 group-hover:text-sky-300 text-xs font-bold uppercase tracking-wider mb-1">Achievements</div>
+      <div class="text-white font-semibold text-lg">My Portfolio Badges</div>
+      <p class="text-slate-400 text-xs mt-2">View earned club achievement and milestone badges</p>
+    </a>
+  </div>
+</div>
