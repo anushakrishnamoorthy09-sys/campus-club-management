@@ -1,0 +1,193 @@
+<div class="space-y-8">
+
+  <!-- Header -->
+  <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-6 border-b border-slate-800">
+    <div>
+      <h1 class="text-2xl sm:text-3xl font-bold text-white tracking-tight">User Account Management</h1>
+      <p class="text-sm text-slate-400 mt-1">Institutional User Directory, Account Provisioning, and Role Status</p>
+    </div>
+  </div>
+
+  <!-- Alerts -->
+  <% if (typeof success !== 'undefined' && success) { %>
+    <div class="p-4 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-sm flex items-center space-x-2">
+      <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
+      <span><%= success %></span>
+    </div>
+  <% } %>
+
+  <% if (typeof error !== 'undefined' && error) { %>
+    <div class="p-4 rounded-xl bg-rose-500/10 border border-rose-500/20 text-rose-400 text-sm flex items-center space-x-2">
+      <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+      <span><%= error %></span>
+    </div>
+  <% } %>
+
+  <!-- Create User Card -->
+  <div class="bg-slate-800/60 border border-slate-700/60 rounded-2xl p-6 shadow-xl">
+    <h2 class="text-lg font-bold text-white mb-4 flex items-center space-x-2">
+      <svg class="w-5 h-5 text-indigo-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z"></path></svg>
+      <span>Provision New User Account</span>
+    </h2>
+
+    <form action="/admin/users" method="POST" class="space-y-4">
+      <input type="hidden" name="_csrf" value="<%= typeof csrfToken !== 'undefined' ? csrfToken : '' %>">
+
+      <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+        <div>
+          <label for="fullName" class="block text-xs font-semibold text-slate-300 uppercase tracking-wider mb-2">Full Name *</label>
+          <input type="text" id="fullName" name="fullName" required placeholder="e.g. Dr. Alan Turing" class="w-full px-4 py-2.5 bg-slate-900 border border-slate-700 rounded-xl text-white text-sm focus:outline-none focus:border-indigo-500 transition">
+        </div>
+
+        <div>
+          <label for="email" class="block text-xs font-semibold text-slate-300 uppercase tracking-wider mb-2">Institutional Email *</label>
+          <input type="email" id="email" name="email" required placeholder="user@campus.edu" class="w-full px-4 py-2.5 bg-slate-900 border border-slate-700 rounded-xl text-white text-sm focus:outline-none focus:border-indigo-500 transition">
+        </div>
+
+        <div>
+          <label for="password" class="block text-xs font-semibold text-slate-300 uppercase tracking-wider mb-2">Initial Password *</label>
+          <input type="password" id="password" name="password" required placeholder="••••••••" class="w-full px-4 py-2.5 bg-slate-900 border border-slate-700 rounded-xl text-white text-sm focus:outline-none focus:border-indigo-500 transition">
+        </div>
+      </div>
+
+      <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+        <div>
+          <label for="role" class="block text-xs font-semibold text-slate-300 uppercase tracking-wider mb-2">Assigned Role *</label>
+          <select id="role" name="role" required onchange="toggleFacultyFields(this.value)" class="w-full px-4 py-2.5 bg-slate-900 border border-slate-700 rounded-xl text-white text-sm focus:outline-none focus:border-indigo-500 transition">
+            <option value="" disabled selected>Select Role</option>
+            <% if (user.role === 'SUPER_ADMIN') { %>
+              <option value="ADMIN">Campus Admin</option>
+              <option value="FACULTY">Faculty Member</option>
+              <option value="CLUB_ADMIN">Club Admin</option>
+            <% } else if (user.role === 'ADMIN') { %>
+              <option value="CLUB_ADMIN">Club Admin</option>
+            <% } %>
+          </select>
+          <% if (user.role === 'ADMIN') { %>
+            <p class="text-xs text-amber-400 mt-1">Campus Admins are restricted to creating Club Admin accounts only.</p>
+          <% } %>
+        </div>
+
+        <div id="facultyDeptField" class="hidden">
+          <label for="department" class="block text-xs font-semibold text-slate-300 uppercase tracking-wider mb-2">Faculty Department *</label>
+          <input type="text" id="department" name="department" placeholder="e.g. Computer Science" class="w-full px-4 py-2.5 bg-slate-900 border border-slate-700 rounded-xl text-white text-sm focus:outline-none focus:border-indigo-500 transition">
+        </div>
+
+        <div id="facultyDesigField" class="hidden">
+          <label for="designation" class="block text-xs font-semibold text-slate-300 uppercase tracking-wider mb-2">Faculty Designation *</label>
+          <input type="text" id="designation" name="designation" placeholder="e.g. Professor" class="w-full px-4 py-2.5 bg-slate-900 border border-slate-700 rounded-xl text-white text-sm focus:outline-none focus:border-indigo-500 transition">
+        </div>
+      </div>
+
+      <div class="pt-2">
+        <button type="submit" class="px-5 py-2.5 bg-indigo-600 hover:bg-indigo-500 text-white font-semibold text-sm rounded-xl transition shadow-md shadow-indigo-600/30">
+          Provision User Account
+        </button>
+      </div>
+    </form>
+  </div>
+
+  <!-- Users Table Card -->
+  <div class="bg-slate-800/60 border border-slate-700/60 rounded-2xl overflow-hidden shadow-xl">
+    <div class="p-6 border-b border-slate-700/60 flex items-center justify-between">
+      <h2 class="text-lg font-bold text-white">System User Directory (<%= users.length %> Accounts)</h2>
+    </div>
+
+    <div class="overflow-x-auto">
+      <table class="w-full text-left border-collapse text-sm">
+        <thead>
+          <tr class="bg-slate-900/80 text-slate-400 text-xs uppercase tracking-wider border-b border-slate-700">
+            <th class="py-3.5 px-6 font-semibold">User Details</th>
+            <th class="py-3.5 px-6 font-semibold">System Role</th>
+            <th class="py-3.5 px-6 font-semibold">Institutional Details</th>
+            <th class="py-3.5 px-6 font-semibold">Status</th>
+            <th class="py-3.5 px-6 font-semibold text-right">Actions</th>
+          </tr>
+        </thead>
+        <tbody class="divide-y divide-slate-700/60 text-slate-300">
+          <% users.forEach(u => { %>
+            <tr class="hover:bg-slate-800/40 transition">
+              <td class="py-4 px-6">
+                <div class="font-semibold text-white"><%= u.full_name %></div>
+                <div class="text-xs text-slate-400"><%= u.email %></div>
+              </td>
+              <td class="py-4 px-6">
+                <% if (u.role === 'SUPER_ADMIN') { %>
+                  <span class="px-2.5 py-1 rounded-lg text-xs font-bold bg-purple-500/10 border border-purple-500/20 text-purple-400">SUPER ADMIN</span>
+                <% } else if (u.role === 'ADMIN') { %>
+                  <span class="px-2.5 py-1 rounded-lg text-xs font-bold bg-indigo-500/10 border border-indigo-500/20 text-indigo-400">ADMIN</span>
+                <% } else if (u.role === 'FACULTY') { %>
+                  <span class="px-2.5 py-1 rounded-lg text-xs font-bold bg-cyan-500/10 border border-cyan-500/20 text-cyan-400">FACULTY</span>
+                <% } else if (u.role === 'CLUB_ADMIN') { %>
+                  <span class="px-2.5 py-1 rounded-lg text-xs font-bold bg-amber-500/10 border border-amber-500/20 text-amber-400">CLUB ADMIN</span>
+                <% } else { %>
+                  <span class="px-2.5 py-1 rounded-lg text-xs font-bold bg-emerald-500/10 border border-emerald-500/20 text-emerald-400">STUDENT</span>
+                <% } %>
+              </td>
+              <td class="py-4 px-6 text-xs text-slate-400">
+                <% if (u.role === 'FACULTY') { %>
+                  <div>Dept: <span class="text-slate-200"><%= u.faculty_department || 'N/A' %></span></div>
+                  <div>Desig: <span class="text-slate-200"><%= u.faculty_designation || 'N/A' %></span></div>
+                <% } else if (u.role === 'STUDENT') { %>
+                  <div>RA: <span class="font-mono text-indigo-400"><%= u.ra_number || 'Pending' %></span></div>
+                  <div>Dept: <span class="text-slate-200"><%= u.student_department || 'N/A' %></span></div>
+                <% } else { %>
+                  <span class="text-slate-500">System Account</span>
+                <% } %>
+              </td>
+              <td class="py-4 px-6">
+                <% if (u.is_active === 1) { %>
+                  <span class="inline-flex items-center space-x-1.5 px-2.5 py-1 rounded-full text-xs font-semibold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+                    <span class="w-1.5 h-1.5 rounded-full bg-emerald-400"></span>
+                    <span>ACTIVE</span>
+                  </span>
+                <% } else { %>
+                  <span class="inline-flex items-center space-x-1.5 px-2.5 py-1 rounded-full text-xs font-semibold bg-rose-500/10 text-rose-400 border border-rose-500/20">
+                    <span class="w-1.5 h-1.5 rounded-full bg-rose-400"></span>
+                    <span>DEACTIVATED</span>
+                  </span>
+                <% } %>
+              </td>
+              <td class="py-4 px-6 text-right">
+                <% if (user.role === 'SUPER_ADMIN') { %>
+                  <% if (u.id === user.id) { %>
+                    <span class="text-xs text-slate-500 italic">Self (Protected)</span>
+                  <% } else { %>
+                    <form action="/admin/users/<%= u.id %>/toggle-status" method="POST" class="inline">
+                      <input type="hidden" name="_csrf" value="<%= typeof csrfToken !== 'undefined' ? csrfToken : '' %>">
+                      <input type="hidden" name="isActive" value="<%= u.is_active === 1 ? '0' : '1' %>">
+                      <button type="submit" class="px-3 py-1.5 rounded-lg text-xs font-semibold transition <%= u.is_active === 1 ? 'bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 border border-rose-500/20' : 'bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-400 border border-emerald-500/20' %>">
+                        <%= u.is_active === 1 ? 'Deactivate' : 'Reactivate' %>
+                      </button>
+                    </form>
+                  <% } %>
+                <% } else { %>
+                  <span class="text-xs text-slate-500">Super Admin Only</span>
+                <% } %>
+              </td>
+            </tr>
+          <% }) %>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+</div>
+
+<script>
+  function toggleFacultyFields(role) {
+    const dept = document.getElementById('facultyDeptField');
+    const desig = document.getElementById('facultyDesigField');
+    if (role === 'FACULTY') {
+      dept.classList.remove('hidden');
+      desig.classList.remove('hidden');
+      document.getElementById('department').setAttribute('required', 'required');
+      document.getElementById('designation').setAttribute('required', 'required');
+    } else {
+      dept.classList.add('hidden');
+      desig.classList.add('hidden');
+      document.getElementById('department').removeAttribute('required');
+      document.getElementById('designation').removeAttribute('required');
+    }
+  }
+</script>

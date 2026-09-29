@@ -9,6 +9,8 @@ require('dotenv').config();
 const { loadUserSession, enforceProfileCompletion } = require('./middleware/auth');
 const { passport } = require('./config/passport');
 const authRoutes = require('./routes/authRoutes');
+const adminRoutes = require('./routes/adminRoutes');
+const clubRoutes = require('./routes/clubRoutes');
 const dashboardRoutes = require('./routes/dashboardRoutes');
 
 const app = express();
@@ -59,8 +61,10 @@ app.set('layout', 'layouts/main');
 app.set('view engine', 'ejs');
 app.set('views', path.join(__dirname, 'views'));
 
-// 7. Mount Authentication & Dashboard Routes
+// 7. Mount Authentication, Admin, Club & Dashboard Routes
 app.use('/', authRoutes);
+app.use('/', adminRoutes);
+app.use('/', clubRoutes);
 app.use('/', dashboardRoutes);
 
 // 8. Base & Health Routes

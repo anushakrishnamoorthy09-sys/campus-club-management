@@ -75,23 +75,6 @@ router.get('/admin/timetable', requireRole('SUPER_ADMIN'), (req, res) => {
   });
 });
 
-// Admin / Super Admin
-router.get('/admin/users', requireRole('SUPER_ADMIN', 'ADMIN'), (req, res) => {
-  res.render('placeholder', {
-    title: 'User Management - CampusClubOS',
-    featureName: 'Institutional User Account Management',
-    roleRequired: 'SUPER_ADMIN / ADMIN'
-  });
-});
-
-router.get('/admin/clubs', requireRole('SUPER_ADMIN', 'ADMIN'), (req, res) => {
-  res.render('placeholder', {
-    title: 'Club Directory Management - CampusClubOS',
-    featureName: 'Campus Clubs & Coordinator Assignment',
-    roleRequired: 'SUPER_ADMIN / ADMIN'
-  });
-});
-
 // Club Admin Shells
 router.get('/club/events', requireRole('CLUB_ADMIN', 'SUPER_ADMIN', 'ADMIN'), (req, res) => {
   res.render('placeholder', {
@@ -110,11 +93,13 @@ router.get('/club/members', requireRole('CLUB_ADMIN', 'SUPER_ADMIN', 'ADMIN'), (
 });
 
 router.get('/club/roles', requireRole('CLUB_ADMIN', 'SUPER_ADMIN', 'ADMIN'), (req, res) => {
-  res.render('placeholder', {
-    title: 'Dynamic Role Management - CampusClubOS',
-    featureName: 'Dynamic Sub-Role Definition & Assignment',
-    roleRequired: 'CLUB_ADMIN'
-  });
+  if (req.user.role === 'CLUB_ADMIN') {
+    const club = require('../db/index').prepare('SELECT id FROM clubs WHERE club_admin_id = ?').get(req.user.id);
+    if (club) {
+      return res.redirect(`/club/${club.id}/roles`);
+    }
+  }
+  return res.redirect('/admin/clubs');
 });
 
 router.get('/club/certificates', requireRole('CLUB_ADMIN', 'SUPER_ADMIN', 'ADMIN'), (req, res) => {

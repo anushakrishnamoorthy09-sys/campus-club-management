@@ -1,0 +1,207 @@
+<div class="space-y-8">
+
+  <!-- Header -->
+  <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-6 border-b border-slate-800">
+    <div>
+      <div class="flex items-center space-x-3">
+        <span class="px-3 py-1 rounded-lg bg-indigo-600/20 text-indigo-400 font-mono font-bold text-xs border border-indigo-500/30"><%= club.code %></span>
+        <h1 class="text-2xl sm:text-3xl font-bold text-white tracking-tight">Dynamic Roles - <%= club.name %></h1>
+      </div>
+      <p class="text-sm text-slate-400 mt-1">Define custom positions and assign granular catalog permissions to club members</p>
+    </div>
+  </div>
+
+  <!-- Alerts -->
+  <% if (typeof success !== 'undefined' && success) { %>
+    <div class="p-4 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-sm flex items-center space-x-2">
+      <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
+      <span><%= success %></span>
+    </div>
+  <% } %>
+
+  <% if (typeof error !== 'undefined' && error) { %>
+    <div class="p-4 rounded-xl bg-rose-500/10 border border-rose-500/20 text-rose-400 text-sm flex items-center space-x-2">
+      <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+      <span><%= error %></span>
+    </div>
+  <% } %>
+
+  <!-- Create Dynamic Role Card -->
+  <div class="bg-slate-800/60 border border-slate-700/60 rounded-2xl p-6 shadow-xl">
+    <h2 class="text-lg font-bold text-white mb-4 flex items-center space-x-2">
+      <svg class="w-5 h-5 text-indigo-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path></svg>
+      <span>Create Dynamic Sub-Role</span>
+    </h2>
+
+    <form action="/club/<%= club.id %>/roles" method="POST" class="space-y-4">
+      <input type="hidden" name="_csrf" value="<%= typeof csrfToken !== 'undefined' ? csrfToken : '' %>">
+
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <div>
+          <label for="roleName" class="block text-xs font-semibold text-slate-300 uppercase tracking-wider mb-2">Position / Role Title *</label>
+          <input type="text" id="roleName" name="roleName" required placeholder="e.g. Logistics Lead, Event Coordinator" class="w-full px-4 py-2.5 bg-slate-900 border border-slate-700 rounded-xl text-white text-sm focus:outline-none focus:border-indigo-500 transition">
+        </div>
+
+        <div>
+          <label for="description" class="block text-xs font-semibold text-slate-300 uppercase tracking-wider mb-2">Description</label>
+          <input type="text" id="description" name="description" placeholder="Brief summary of duties and responsibilities..." class="w-full px-4 py-2.5 bg-slate-900 border border-slate-700 rounded-xl text-white text-sm focus:outline-none focus:border-indigo-500 transition">
+        </div>
+      </div>
+
+      <!-- Permission Picker (Catalog Permissions Only) -->
+      <div>
+        <label class="block text-xs font-semibold text-slate-300 uppercase tracking-wider mb-3">
+          Select Catalog Permissions to Grant *
+        </label>
+        <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3 p-4 bg-slate-900/80 border border-slate-700/80 rounded-xl">
+          <% catalogPermissions.forEach(perm => { %>
+            <label class="flex items-center space-x-2.5 cursor-pointer p-2 rounded-lg hover:bg-slate-800 transition">
+              <input type="checkbox" name="permissionNames" value="<%= perm %>" class="w-4 h-4 text-indigo-600 bg-slate-800 border-slate-600 rounded focus:ring-indigo-500 focus:ring-offset-slate-900">
+              <span class="text-xs font-mono font-medium text-slate-200"><%= perm %></span>
+            </label>
+          <% }) %>
+        </div>
+        <p class="text-xs text-slate-500 mt-1.5">Forbidden system administrative permissions (such as TIMETABLE_CREATE_EDIT, APPROVE_EVENT, etc.) are strictly excluded and enforced server-side.</p>
+      </div>
+
+      <div class="pt-2">
+        <button type="submit" class="px-5 py-2.5 bg-indigo-600 hover:bg-indigo-500 text-white font-semibold text-sm rounded-xl transition shadow-md shadow-indigo-600/30">
+          Create Dynamic Role
+        </button>
+      </div>
+    </form>
+  </div>
+
+  <!-- Dynamic Roles Directory -->
+  <div class="space-y-4">
+    <h2 class="text-lg font-bold text-white">Defined Dynamic Roles (<%= roles.length %> Roles)</h2>
+
+    <div class="grid grid-cols-1 gap-4">
+      <% if (roles.length === 0) { %>
+        <div class="p-6 bg-slate-800/40 border border-slate-700/40 rounded-2xl text-center text-slate-400 text-sm">
+          No custom dynamic roles created for this club yet.
+        </div>
+      <% } %>
+
+      <% roles.forEach(r => { %>
+        <div class="bg-slate-800/60 border border-slate-700/60 rounded-2xl p-5 shadow-xl flex flex-col md:flex-row md:items-center justify-between gap-4">
+          <div class="space-y-2 max-w-2xl">
+            <h3 class="text-base font-bold text-white"><%= r.role_name %></h3>
+            <p class="text-xs text-slate-400"><%= r.description || 'No description provided.' %></p>
+            
+            <div class="flex flex-wrap gap-1.5 pt-1">
+              <% if (r.permissionNames.length === 0) { %>
+                <span class="text-xs text-slate-500 italic">No permissions assigned</span>
+              <% } else { %>
+                <% r.permissionNames.forEach(p => { %>
+                  <span class="px-2 py-0.5 rounded-md text-[10px] font-mono font-semibold bg-indigo-500/10 text-indigo-400 border border-indigo-500/20"><%= p %></span>
+                <% }) %>
+              <% } %>
+            </div>
+          </div>
+
+          <div class="flex items-center space-x-3">
+            <details class="relative">
+              <summary class="cursor-pointer px-3 py-1.5 bg-slate-700 hover:bg-slate-600 text-slate-200 text-xs font-semibold rounded-lg border border-slate-600 transition">
+                Edit Permissions
+              </summary>
+              <div class="absolute right-0 mt-2 w-80 bg-slate-900 border border-slate-700 rounded-2xl p-4 shadow-2xl z-20 text-left">
+                <h4 class="text-sm font-bold text-white mb-3">Edit Role: <%= r.role_name %></h4>
+                <form action="/club/<%= club.id %>/roles/<%= r.id %>/update" method="POST" class="space-y-3">
+                  <input type="hidden" name="_csrf" value="<%= typeof csrfToken !== 'undefined' ? csrfToken : '' %>">
+                  <div>
+                    <label class="block text-xs text-slate-400 mb-1">Role Title</label>
+                    <input type="text" name="roleName" value="<%= r.role_name %>" required class="w-full px-3 py-1.5 bg-slate-800 border border-slate-700 rounded-lg text-white text-xs">
+                  </div>
+                  <div>
+                    <label class="block text-xs text-slate-400 mb-1">Description</label>
+                    <input type="text" name="description" value="<%= r.description || '' %>" class="w-full px-3 py-1.5 bg-slate-800 border border-slate-700 rounded-lg text-white text-xs">
+                  </div>
+                  <div>
+                    <label class="block text-xs text-slate-400 mb-1">Permissions</label>
+                    <div class="space-y-1.5 max-h-40 overflow-y-auto p-2 bg-slate-800 rounded-lg border border-slate-700">
+                      <% catalogPermissions.forEach(perm => { %>
+                        <label class="flex items-center space-x-2 cursor-pointer">
+                          <input type="checkbox" name="permissionNames" value="<%= perm %>" <%= r.permissionNames.includes(perm) ? 'checked' : '' %> class="w-3.5 h-3.5 text-indigo-600 bg-slate-900 border-slate-600 rounded">
+                          <span class="text-[11px] font-mono text-slate-200"><%= perm %></span>
+                        </label>
+                      <% }) %>
+                    </div>
+                  </div>
+                  <button type="submit" class="w-full py-2 bg-indigo-600 hover:bg-indigo-500 text-white font-semibold text-xs rounded-lg transition">Save Role</button>
+                </form>
+              </div>
+            </details>
+
+            <form action="/club/<%= club.id %>/roles/<%= r.id %>/delete" method="POST" class="inline" onsubmit="return confirm('Deleting this role will unassign all assigned club members. Proceed?');">
+              <input type="hidden" name="_csrf" value="<%= typeof csrfToken !== 'undefined' ? csrfToken : '' %>">
+              <button type="submit" class="px-3 py-1.5 bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 text-xs font-semibold rounded-lg border border-rose-500/20 transition">
+                Delete
+              </button>
+            </form>
+          </div>
+        </div>
+      <% }) %>
+    </div>
+  </div>
+
+  <!-- Member Dynamic Role Assignment Table -->
+  <div class="bg-slate-800/60 border border-slate-700/60 rounded-2xl overflow-hidden shadow-xl">
+    <div class="p-6 border-b border-slate-700/60">
+      <h2 class="text-lg font-bold text-white">Approved Club Members & Position Assignment (<%= members.length %> Members)</h2>
+    </div>
+
+    <div class="overflow-x-auto">
+      <table class="w-full text-left border-collapse text-sm">
+        <thead>
+          <tr class="bg-slate-900/80 text-slate-400 text-xs uppercase tracking-wider border-b border-slate-700">
+            <th class="py-3.5 px-6 font-semibold">Member Details</th>
+            <th class="py-3.5 px-6 font-semibold">Assigned Position</th>
+            <th class="py-3.5 px-6 font-semibold text-right">Assign Dynamic Position</th>
+          </tr>
+        </thead>
+        <tbody class="divide-y divide-slate-700/60 text-slate-300">
+          <% if (members.length === 0) { %>
+            <tr>
+              <td colspan="3" class="py-6 text-center text-slate-400 text-sm italic">
+                No approved members in this club yet.
+              </td>
+            </tr>
+          <% } %>
+
+          <% members.forEach(m => { %>
+            <tr class="hover:bg-slate-800/40 transition">
+              <td class="py-4 px-6">
+                <div class="font-semibold text-white"><%= m.full_name %></div>
+                <div class="text-xs text-slate-400"><%= m.email %></div>
+              </td>
+              <td class="py-4 px-6">
+                <% if (m.role_name) { %>
+                  <span class="px-2.5 py-1 rounded-lg text-xs font-bold bg-indigo-500/10 border border-indigo-500/20 text-indigo-400"><%= m.role_name %></span>
+                <% } else { %>
+                  <span class="text-xs text-slate-500 italic">Regular Member</span>
+                <% } %>
+              </td>
+              <td class="py-4 px-6 text-right">
+                <form action="/club/<%= club.id %>/members/assign-role" method="POST" class="inline-flex items-center space-x-2">
+                  <input type="hidden" name="_csrf" value="<%= typeof csrfToken !== 'undefined' ? csrfToken : '' %>">
+                  <input type="hidden" name="membershipIdInput" value="<%= m.membership_id %>">
+                  <select name="clubRoleIdInput" class="px-3 py-1.5 bg-slate-900 border border-slate-700 rounded-lg text-white text-xs focus:outline-none focus:border-indigo-500">
+                    <option value="">No Role (Regular Member)</option>
+                    <% roles.forEach(r => { %>
+                      <option value="<%= r.id %>" <%= m.club_role_id === r.id ? 'selected' : '' %>><%= r.role_name %></option>
+                    <% }) %>
+                  </select>
+                  <button type="submit" class="px-3 py-1.5 bg-indigo-600 hover:bg-indigo-500 text-white font-semibold text-xs rounded-lg transition shadow-sm">
+                    Assign
+                  </button>
+                </form>
+              </td>
+            </tr>
+          <% }) %>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+</div>
