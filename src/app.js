@@ -7,6 +7,7 @@ const rateLimit = require('express-rate-limit');
 require('dotenv').config();
 
 const { loadUserSession, enforceProfileCompletion } = require('./middleware/auth');
+const { attachCsrfToken } = require('./middleware/csrf');
 const { passport } = require('./config/passport');
 const authRoutes = require('./routes/authRoutes');
 const adminRoutes = require('./routes/adminRoutes');
@@ -54,10 +55,11 @@ const globalLimiter = rateLimit({
 });
 app.use(globalLimiter);
 
-// 3. Cookie Parser & Body Parsers
+// 3. Cookie Parser, Body Parsers & CSRF Local Attachment
 app.use(cookieParser());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
+app.use(attachCsrfToken);
 
 // 4. Load User Session from Stateless JWT Cookie & Enforce Complete Profile
 app.use(loadUserSession);

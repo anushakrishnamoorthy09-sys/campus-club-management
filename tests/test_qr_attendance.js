@@ -56,8 +56,8 @@ function runQrAttendanceTests() {
     description: 'Not started event',
     venue: 'Seminar Hall 2',
     event_date: todayStr,
-    start_time: '14:00',
-    end_time: '16:00',
+    start_time: '23:50',
+    end_time: '23:59',
     capacity: 50
   });
   eventService.transition(event2.id, 'submit', clubAdmin);
