@@ -24,41 +24,85 @@ router.get('/dashboard', requireRole('SUPER_ADMIN', 'ADMIN', 'CLUB_ADMIN', 'FACU
   }
 });
 
+const notificationService = require('../services/notificationService');
+
 /**
  * ROLE DASHBOARDS
  */
 router.get('/dashboard/super-admin', requireRole('SUPER_ADMIN'), (req, res) => {
+  const recentNotifications = notificationService.getRecentNotifications(req.user.id, 5);
   res.render('dashboards/super_admin', {
     title: 'Super Admin Control Panel - CampusClubOS',
-    activeTab: 'overview'
+    activeTab: 'overview',
+    recentNotifications
   });
 });
 
 router.get('/dashboard/admin', requireRole('ADMIN'), (req, res) => {
+  const recentNotifications = notificationService.getRecentNotifications(req.user.id, 5);
   res.render('dashboards/admin', {
     title: 'Campus Admin Dashboard - CampusClubOS',
-    activeTab: 'overview'
+    activeTab: 'overview',
+    recentNotifications
   });
 });
 
 router.get('/dashboard/club-admin', requireRole('CLUB_ADMIN'), (req, res) => {
+  const recentNotifications = notificationService.getRecentNotifications(req.user.id, 5);
   res.render('dashboards/club_admin', {
     title: 'Club Admin Workspace - CampusClubOS',
-    activeTab: 'overview'
+    activeTab: 'overview',
+    recentNotifications
   });
 });
 
 router.get('/dashboard/faculty', requireRole('FACULTY'), (req, res) => {
+  const recentNotifications = notificationService.getRecentNotifications(req.user.id, 5);
   res.render('dashboards/faculty', {
     title: 'Faculty Portal - CampusClubOS',
-    activeTab: 'overview'
+    activeTab: 'overview',
+    recentNotifications
   });
 });
 
 router.get('/dashboard/student', requireRole('STUDENT'), (req, res) => {
+  const db = require('../db/index');
+  const studentUserId = req.user.id;
+
+  const stats = db.prepare(`
+    SELECT
+      COUNT(*) as total_ods,
+      SUM(CASE WHEN status = 'PENDING' THEN 1 ELSE 0 END) as pending_count,
+      SUM(CASE WHEN status = 'APPROVED' THEN 1 ELSE 0 END) as approved_count,
+      SUM(CASE WHEN status = 'REJECTED' THEN 1 ELSE 0 END) as rejected_count,
+      SUM(CASE WHEN status = 'CLOSED' THEN 1 ELSE 0 END) as closed_count
+    FROM od_requests
+    WHERE student_user_id = ?
+  `).get(studentUserId);
+
+  const totalOds = stats ? (stats.total_ods || 0) : 0;
+  const pendingCount = stats ? (stats.pending_count || 0) : 0;
+  const approvedCount = stats ? (stats.approved_count || 0) : 0;
+  const rejectedCount = stats ? (stats.rejected_count || 0) : 0;
+  const closedCount = stats ? (stats.closed_count || 0) : 0;
+
+  const decidedCount = approvedCount + rejectedCount;
+  const approvalRate = decidedCount > 0 ? Math.round((approvedCount / decidedCount) * 100) : 0;
+
+  const recentNotifications = notificationService.getRecentNotifications(studentUserId, 5);
+
   res.render('dashboards/student', {
     title: 'Student Hub - CampusClubOS',
-    activeTab: 'overview'
+    activeTab: 'overview',
+    odStats: {
+      totalOds,
+      pendingCount,
+      approvedCount,
+      rejectedCount,
+      closedCount,
+      approvalRate
+    },
+    recentNotifications
   });
 });
 
@@ -68,13 +112,6 @@ router.get('/dashboard/student', requireRole('STUDENT'), (req, res) => {
 
 
 // Club Admin Shells
-router.get('/club/events', requireRole('CLUB_ADMIN', 'SUPER_ADMIN', 'ADMIN'), (req, res) => {
-  res.render('placeholder', {
-    title: 'Club Event Management - CampusClubOS',
-    featureName: 'Club Event Creation & Faculty Submission',
-    roleRequired: 'CLUB_ADMIN'
-  });
-});
 
 router.get('/club/members', requireRole('CLUB_ADMIN', 'SUPER_ADMIN', 'ADMIN'), (req, res) => {
   res.render('placeholder', {
@@ -110,55 +147,8 @@ router.get('/club/badges', requireRole('CLUB_ADMIN', 'SUPER_ADMIN', 'ADMIN'), (r
   });
 });
 
-// Faculty Shells
-router.get('/faculty/events', requireRole('FACULTY', 'SUPER_ADMIN', 'ADMIN'), (req, res) => {
-  res.render('placeholder', {
-    title: 'Event Approvals - CampusClubOS',
-    featureName: 'Club Event Proposals Review Queue',
-    roleRequired: 'FACULTY (Coordinator)'
-  });
-});
-
-router.get('/faculty/od', requireRole('FACULTY', 'SUPER_ADMIN', 'ADMIN'), (req, res) => {
-  res.render('placeholder', {
-    title: 'On-Duty Approvals - CampusClubOS',
-    featureName: 'Mentee OD Application Review Queue',
-    roleRequired: 'FACULTY (Class Mentor)'
-  });
-});
-
-router.get('/faculty/mentees', requireRole('FACULTY', 'SUPER_ADMIN', 'ADMIN'), (req, res) => {
-  res.render('placeholder', {
-    title: 'Mentee Roster - CampusClubOS',
-    featureName: 'Assigned Mentee Participation Records',
-    roleRequired: 'FACULTY'
-  });
-});
 
 // Student Shells
-router.get('/student/events', requireRole('STUDENT', 'SUPER_ADMIN', 'ADMIN'), (req, res) => {
-  res.render('placeholder', {
-    title: 'Approved Events - CampusClubOS',
-    featureName: 'Browse & Register for Approved Events',
-    roleRequired: 'STUDENT'
-  });
-});
-
-router.get('/student/my-registrations', requireRole('STUDENT', 'SUPER_ADMIN', 'ADMIN'), (req, res) => {
-  res.render('placeholder', {
-    title: 'My Event Registrations - CampusClubOS',
-    featureName: 'My Event Registrations & Check-In',
-    roleRequired: 'STUDENT'
-  });
-});
-
-router.get('/student/od', requireRole('STUDENT', 'SUPER_ADMIN', 'ADMIN'), (req, res) => {
-  res.render('placeholder', {
-    title: 'On-Duty Requests - CampusClubOS',
-    featureName: 'My OD Applications & Period Status',
-    roleRequired: 'STUDENT'
-  });
-});
 
 router.get('/student/certificates', requireRole('STUDENT', 'SUPER_ADMIN', 'ADMIN'), (req, res) => {
   res.render('placeholder', {

@@ -204,10 +204,14 @@ CREATE TABLE events (
     status TEXT NOT NULL DEFAULT 'DRAFT' CHECK (status IN ('DRAFT', 'PENDING_APPROVAL', 'APPROVED', 'REJECTED', 'ONGOING', 'COMPLETED', 'CANCELLED')),
     rejection_remark TEXT,
     cancellation_reason TEXT,
+    escalated_at DATETIME,
+    escalated_by INTEGER,
+    escalation_reason TEXT,
     created_by INTEGER NOT NULL,
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
     updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (club_id) REFERENCES clubs(id) ON DELETE CASCADE,
+    FOREIGN KEY (escalated_by) REFERENCES users(id) ON DELETE SET NULL,
     FOREIGN KEY (created_by) REFERENCES users(id) ON DELETE RESTRICT
 );
 
@@ -252,15 +256,21 @@ CREATE TABLE od_requests (
     registration_id INTEGER NOT NULL,
     student_user_id INTEGER NOT NULL,
     class_mentor_id INTEGER NOT NULL,
-    status TEXT NOT NULL DEFAULT 'PENDING' CHECK (status IN ('PENDING', 'APPROVED', 'REJECTED')),
+    status TEXT NOT NULL DEFAULT 'PENDING' CHECK (status IN ('PENDING', 'APPROVED', 'REJECTED', 'CLOSED')),
+    working_periods_json TEXT,
     faculty_remark TEXT,
     reviewed_by INTEGER,
     reviewed_at DATETIME,
+    escalated_at DATETIME,
+    escalated_by INTEGER,
+    escalation_reason TEXT,
+    decided_via TEXT CHECK (decided_via IN ('MENTOR', 'ADMIN_ESCALATION', 'SYSTEM_AUTO_CLOSE')),
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (registration_id) REFERENCES event_registrations(id) ON DELETE RESTRICT,
     FOREIGN KEY (student_user_id) REFERENCES students(user_id) ON DELETE CASCADE,
     FOREIGN KEY (class_mentor_id) REFERENCES faculty(user_id) ON DELETE RESTRICT,
-    FOREIGN KEY (reviewed_by) REFERENCES faculty(user_id) ON DELETE RESTRICT
+    FOREIGN KEY (reviewed_by) REFERENCES users(id) ON DELETE RESTRICT,
+    FOREIGN KEY (escalated_by) REFERENCES users(id) ON DELETE RESTRICT
 );
 
 -- Partial Unique Index: Only ONE active PENDING or APPROVED OD request per registration
@@ -298,10 +308,15 @@ CREATE TABLE certificates (
     verification_hash TEXT NOT NULL UNIQUE,
     issued_by INTEGER NOT NULL,
     issued_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    status TEXT NOT NULL DEFAULT 'ISSUED' CHECK (status IN ('ISSUED', 'REVOKED')),
+    revocation_reason TEXT,
+    revoked_by INTEGER,
+    revoked_at DATETIME,
     UNIQUE(event_id, student_user_id),
     FOREIGN KEY (event_id) REFERENCES events(id) ON DELETE RESTRICT,
     FOREIGN KEY (student_user_id) REFERENCES students(user_id) ON DELETE CASCADE,
-    FOREIGN KEY (issued_by) REFERENCES users(id) ON DELETE RESTRICT
+    FOREIGN KEY (issued_by) REFERENCES users(id) ON DELETE RESTRICT,
+    FOREIGN KEY (revoked_by) REFERENCES users(id) ON DELETE SET NULL
 );
 
 -- ----------------------------------------------------------------------------
@@ -325,6 +340,7 @@ CREATE TABLE student_badges (
     badge_id INTEGER NOT NULL,
     student_user_id INTEGER NOT NULL,
     awarded_by INTEGER NOT NULL,
+    reason TEXT,
     awarded_at DATETIME DEFAULT CURRENT_TIMESTAMP,
     UNIQUE(badge_id, student_user_id),
     FOREIGN KEY (badge_id) REFERENCES badges(id) ON DELETE CASCADE,
@@ -449,21 +465,50 @@ BEGIN
 
     SELECT RAISE(ABORT, 'Invalid event transition: PENDING_APPROVAL cannot change directly to ONGOING.')
     WHERE OLD.status = 'PENDING_APPROVAL' AND NEW.status = 'ONGOING';
+
+    SELECT RAISE(ABORT, 'Invalid event transition: PENDING_APPROVAL cannot change directly to COMPLETED.')
+    WHERE OLD.status = 'PENDING_APPROVAL' AND NEW.status = 'COMPLETED';
+
+    SELECT RAISE(ABORT, 'Invalid event transition: APPROVED cannot change directly to DRAFT.')
+    WHERE OLD.status = 'APPROVED' AND NEW.status = 'DRAFT';
+
+    SELECT RAISE(ABORT, 'Invalid event transition: COMPLETED events cannot transition to any other status.')
+    WHERE OLD.status = 'COMPLETED' AND NEW.status != 'COMPLETED';
 END;
 
--- Trigger 4: Prevent modification of decided OD request status
-CREATE TRIGGER trg_lock_decided_od_status
-BEFORE UPDATE OF status ON od_requests
+-- Trigger 4: Prevent modification of decided OD request
+CREATE TRIGGER trg_lock_decided_od
+BEFORE UPDATE ON od_requests
 FOR EACH ROW
 BEGIN
-    SELECT RAISE(ABORT, 'OD request status is locked and cannot be modified once decided.')
-    WHERE OLD.status IN ('APPROVED', 'REJECTED');
+    SELECT RAISE(ABORT, 'OD request is locked and cannot be modified once decided.')
+    WHERE OLD.status IN ('APPROVED', 'REJECTED', 'CLOSED');
 END;
 
--- Trigger 5: Prevent alteration of od_request_periods after OD approval
-CREATE TRIGGER trg_lock_od_request_periods
+-- Trigger 5: Prevent alteration or deletion of od_request_periods snapshot rows
+CREATE TRIGGER trg_lock_od_request_periods_update
 BEFORE UPDATE ON od_request_periods
 FOR EACH ROW
 BEGIN
     SELECT RAISE(ABORT, 'Historical OD period snapshots are immutable and cannot be edited.');
+END;
+
+CREATE TRIGGER trg_lock_od_request_periods_delete
+BEFORE DELETE ON od_request_periods
+FOR EACH ROW
+BEGIN
+    SELECT RAISE(ABORT, 'Historical OD period snapshots are immutable and cannot be deleted.');
+END;
+
+-- Trigger 6: Ensure certificate issuance requires event COMPLETED status and student attendance PRESENT
+CREATE TRIGGER trg_check_certificate_issuance_eligibility
+BEFORE INSERT ON certificates
+FOR EACH ROW
+BEGIN
+    SELECT RAISE(ABORT, 'Certificate issuance blocked: Event status must be COMPLETED.')
+    WHERE (SELECT status FROM events WHERE id = NEW.event_id) != 'COMPLETED';
+
+    SELECT RAISE(ABORT, 'Certificate issuance blocked: Student must be registered and marked PRESENT.')
+    WHERE (SELECT status FROM attendance WHERE event_id = NEW.event_id AND student_user_id = NEW.student_user_id) IS NULL
+       OR (SELECT status FROM attendance WHERE event_id = NEW.event_id AND student_user_id = NEW.student_user_id) != 'PRESENT';
 END;

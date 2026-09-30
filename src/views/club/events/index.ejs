@@ -1,0 +1,157 @@
+<div class="space-y-8">
+
+  <!-- Header -->
+  <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-6 border-b border-slate-800">
+    <div>
+      <div class="flex items-center space-x-3">
+        <span class="px-3 py-1 rounded-lg bg-indigo-600/20 text-indigo-400 font-mono font-bold text-xs border border-indigo-500/30"><%= club.code %></span>
+        <h1 class="text-2xl sm:text-3xl font-bold text-white tracking-tight">Club Events - <%= club.name %></h1>
+      </div>
+      <p class="text-sm text-slate-400 mt-1">Manage and track your club's event proposals, approvals, and schedules</p>
+    </div>
+
+    <% if (userPerms.isClubAdmin || userPerms.permissions.includes('EVENT_CREATE')) { %>
+      <div>
+        <a href="/club/events/new" class="inline-flex items-center space-x-2 px-4 py-2.5 bg-indigo-600 hover:bg-indigo-500 text-white font-semibold text-sm rounded-xl transition shadow-md shadow-indigo-600/30">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path></svg>
+          <span>Create New Event</span>
+        </a>
+      </div>
+    <% } %>
+  </div>
+
+  <!-- Dynamic Role Permissions Banner -->
+  <div class="p-4 bg-slate-800/80 border border-slate-700/80 rounded-2xl flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs">
+    <div class="flex items-center space-x-3">
+      <div class="px-2.5 py-1 rounded-lg bg-indigo-500/10 text-indigo-400 font-bold border border-indigo-500/20">
+        <%= userPerms.roleTitle %>
+      </div>
+      <span class="text-slate-300">
+        Granted Event Privileges:
+        <% if (userPerms.isClubAdmin) { %>
+          <span class="font-bold text-indigo-300">Full Administrative Control (Create, Edit, Submit, Start, Complete, Cancel, Roster)</span>
+        <% } else if (userPerms.permissions.length === 0) { %>
+          <span class="text-slate-500 italic">No event management permissions granted</span>
+        <% } else { %>
+          <% userPerms.permissions.forEach(p => { %>
+            <span class="ml-1 px-2 py-0.5 rounded bg-slate-700 text-indigo-300 font-mono"><%= p %></span>
+          <% }) %>
+        <% } %>
+      </span>
+    </div>
+  </div>
+
+  <!-- Alerts -->
+  <% if (typeof success !== 'undefined' && success) { %>
+    <div class="p-4 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-sm flex items-center space-x-2">
+      <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
+      <span><%= success %></span>
+    </div>
+  <% } %>
+
+  <% if (typeof error !== 'undefined' && error) { %>
+    <div class="p-4 rounded-xl bg-rose-500/10 border border-rose-500/20 text-rose-400 text-sm flex items-center space-x-2">
+      <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+      <span><%= error %></span>
+    </div>
+  <% } %>
+
+  <!-- Filters -->
+  <div class="flex flex-wrap items-center gap-2 border-b border-slate-800 pb-4">
+    <% const filters = ['ALL', 'DRAFT', 'PENDING_APPROVAL', 'APPROVED', 'REJECTED', 'ONGOING', 'COMPLETED', 'CANCELLED']; %>
+    <% filters.forEach(f => { %>
+      <a href="/club/events?status=<%= f %>" class="px-3 py-1.5 rounded-lg text-xs font-semibold transition <%= statusFilter === f ? 'bg-indigo-600 text-white' : 'bg-slate-800 text-slate-400 hover:text-white hover:bg-slate-700' %>">
+        <%= f.replace('_', ' ') %>
+      </a>
+    <% }) %>
+  </div>
+
+  <!-- Events List -->
+  <div class="grid grid-cols-1 gap-6">
+    <% if (events.length === 0) { %>
+      <div class="p-8 bg-slate-800/40 border border-slate-700/40 rounded-2xl text-center text-slate-400 text-sm">
+        No events found matching status filter '<%= statusFilter %>'.
+      </div>
+    <% } %>
+
+    <% events.forEach(e => { %>
+      <div class="bg-slate-800/60 border border-slate-700/60 rounded-2xl p-6 shadow-xl flex flex-col md:flex-row md:items-center justify-between gap-6">
+        <div class="space-y-3 max-w-3xl">
+          <div class="flex flex-wrap items-center gap-2">
+            <!-- Status Badge -->
+            <% if (e.status === 'DRAFT') { %>
+              <span class="px-2.5 py-1 rounded-lg text-xs font-bold bg-slate-700 text-slate-300 border border-slate-600">DRAFT</span>
+            <% } else if (e.status === 'PENDING_APPROVAL') { %>
+              <span class="px-2.5 py-1 rounded-lg text-xs font-bold bg-amber-500/10 text-amber-400 border border-amber-500/20 flex items-center space-x-1">
+                <span>PENDING APPROVAL</span>
+                <% if (e.escalated_at) { %>
+                  <span class="px-1.5 py-0.5 rounded bg-rose-500/20 text-rose-300 text-[10px]">ESCALATED</span>
+                <% } %>
+              </span>
+            <% } else if (e.status === 'APPROVED') { %>
+              <span class="px-2.5 py-1 rounded-lg text-xs font-bold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">APPROVED</span>
+            <% } else if (e.status === 'REJECTED') { %>
+              <span class="px-2.5 py-1 rounded-lg text-xs font-bold bg-rose-500/10 text-rose-400 border border-rose-500/20">REJECTED</span>
+            <% } else if (e.status === 'ONGOING') { %>
+              <span class="px-2.5 py-1 rounded-lg text-xs font-bold bg-indigo-500/20 text-indigo-300 border border-indigo-500/30 animate-pulse">ONGOING</span>
+            <% } else if (e.status === 'COMPLETED') { %>
+              <span class="px-2.5 py-1 rounded-lg text-xs font-bold bg-blue-500/10 text-blue-400 border border-blue-500/20">COMPLETED</span>
+            <% } else if (e.status === 'CANCELLED') { %>
+              <span class="px-2.5 py-1 rounded-lg text-xs font-bold bg-slate-800 text-slate-500 border border-slate-700">CANCELLED</span>
+            <% } %>
+
+            <span class="text-xs text-slate-400">📅 <%= e.event_date %> (<%= e.start_time %> - <%= e.end_time %>)</span>
+            <span class="text-xs text-slate-400">📍 <%= e.venue %></span>
+            <span class="text-xs font-mono text-slate-400">👥 <%= e.registration_count %> / <%= e.capacity %></span>
+          </div>
+
+          <h2 class="text-xl font-bold text-white tracking-tight">
+            <a href="/club/events/<%= e.id %>" class="hover:text-indigo-400 transition"><%= e.title %></a>
+          </h2>
+
+          <p class="text-xs text-slate-300 line-clamp-2"><%= e.description %></p>
+
+          <!-- Rejection Reason Callout -->
+          <% if (e.status === 'REJECTED' && e.rejection_remark) { %>
+            <div class="p-3 bg-rose-500/10 border border-rose-500/30 rounded-xl text-xs text-rose-300">
+              <strong class="font-semibold text-rose-200">Rejection Reason:</strong> <%= e.rejection_remark %>
+            </div>
+          <% } %>
+        </div>
+
+        <!-- Per-event Actions Legal for current state & user permissions -->
+        <div class="flex flex-wrap items-center gap-2 md:flex-col md:items-end">
+          <a href="/club/events/<%= e.id %>" class="px-3.5 py-1.5 bg-slate-700 hover:bg-slate-600 text-white font-semibold text-xs rounded-lg transition border border-slate-600">
+            View Details
+          </a>
+
+          <!-- Edit Action -->
+          <% if ((userPerms.isClubAdmin || userPerms.permissions.includes('EVENT_EDIT')) && ['DRAFT', 'REJECTED', 'APPROVED'].includes(e.status)) { %>
+            <a href="/club/events/<%= e.id %>/edit" class="px-3.5 py-1.5 bg-amber-600/20 hover:bg-amber-600/30 text-amber-300 border border-amber-500/30 font-semibold text-xs rounded-lg transition">
+              Edit Event
+            </a>
+          <% } %>
+
+          <!-- Submit / Resubmit Actions -->
+          <% if ((userPerms.isClubAdmin || userPerms.permissions.includes('EVENT_SUBMIT')) && (e.status === 'DRAFT' || e.status === 'REJECTED')) { %>
+            <form action="/club/events/<%= e.id %>/transition" method="POST" class="inline">
+              <input type="hidden" name="_csrf" value="<%= typeof csrfToken !== 'undefined' ? csrfToken : '' %>">
+              <input type="hidden" name="action" value="submit">
+              <button type="submit" class="px-3.5 py-1.5 bg-indigo-600 hover:bg-indigo-500 text-white font-semibold text-xs rounded-lg transition shadow-sm">
+                <%= e.status === 'REJECTED' ? 'Resubmit for Approval' : 'Submit for Approval' %>
+              </button>
+            </form>
+          <% } %>
+
+          <!-- Registrations roster link -->
+          <% if (userPerms.isClubAdmin || userPerms.permissions.includes('VIEW_REGISTRATIONS')) { %>
+            <a href="/club/events/<%= e.id %>/registrations" class="px-3.5 py-1.5 bg-slate-800 hover:bg-slate-700 text-indigo-400 font-semibold text-xs rounded-lg transition border border-slate-700">
+              Registrations (<%= e.registration_count %>)
+            </a>
+          <% } %>
+        </div>
+      </div>
+    <% }) %>
+  </div>
+
+</div>

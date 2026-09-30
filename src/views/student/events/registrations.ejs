@@ -1,0 +1,163 @@
+<div class="space-y-8">
+
+  <!-- Header -->
+  <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-6 border-b border-slate-800">
+    <div>
+      <h1 class="text-2xl sm:text-3xl font-bold text-white tracking-tight">My Event Registrations</h1>
+      <p class="text-sm text-slate-400 mt-1">Track your event signups, manage cancellations, and prepare for upcoming activities</p>
+    </div>
+    <div>
+      <a href="/student/events" class="inline-flex items-center space-x-2 px-4 py-2.5 bg-indigo-600 hover:bg-indigo-500 text-white font-semibold text-xs rounded-xl transition shadow-md shadow-indigo-600/30">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path></svg>
+        <span>Browse More Events</span>
+      </a>
+    </div>
+  </div>
+
+  <!-- Alerts -->
+  <% if (typeof success !== 'undefined' && success) { %>
+    <div class="p-4 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-sm flex items-center space-x-2">
+      <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
+      <span><%= success %></span>
+    </div>
+  <% } %>
+
+  <% if (typeof error !== 'undefined' && error) { %>
+    <div class="p-4 rounded-xl bg-rose-500/10 border border-rose-500/20 text-rose-400 text-sm flex items-start space-x-2">
+      <svg class="w-5 h-5 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+      <div>
+        <strong class="font-bold block">Action Denied</strong>
+        <span><%= error %></span>
+      </div>
+    </div>
+  <% } %>
+
+  <!-- Registrations Catalog Cards -->
+  <div class="grid grid-cols-1 gap-6">
+    <% if (registrations.length === 0) { %>
+      <div class="p-8 bg-slate-800/40 border border-slate-700/40 rounded-2xl text-center text-slate-400 text-sm">
+        You have not registered for any campus events yet.
+        <a href="/student/events" class="block text-indigo-400 font-bold hover:underline mt-2">Browse Available Events &rarr;</a>
+      </div>
+    <% } %>
+
+    <% registrations.forEach(r => { %>
+      <div class="bg-slate-800/60 border border-slate-700/60 rounded-2xl p-6 shadow-xl flex flex-col md:flex-row md:items-center justify-between gap-6">
+        
+        <div class="space-y-3 max-w-3xl">
+          <div class="flex flex-wrap items-center gap-2">
+            <!-- Event Status Badge -->
+            <% if (r.event_status === 'APPROVED') { %>
+              <span class="px-2.5 py-1 rounded-lg text-xs font-bold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">EVENT APPROVED</span>
+            <% } else if (r.event_status === 'ONGOING') { %>
+              <span class="px-2.5 py-1 rounded-lg text-xs font-bold bg-indigo-500/20 text-indigo-300 border border-indigo-500/30 animate-pulse">EVENT ONGOING</span>
+            <% } else if (r.event_status === 'COMPLETED') { %>
+              <span class="px-2.5 py-1 rounded-lg text-xs font-bold bg-blue-500/10 text-blue-400 border border-blue-500/20">EVENT COMPLETED</span>
+            <% } else if (r.event_status === 'CANCELLED') { %>
+              <span class="px-2.5 py-1 rounded-lg text-xs font-bold bg-slate-800 text-slate-500 border border-slate-700">EVENT CANCELLED</span>
+            <% } else { %>
+              <span class="px-2.5 py-1 rounded-lg text-xs font-bold bg-slate-800 text-slate-400 border border-slate-700"><%= r.event_status %></span>
+            <% } %>
+
+            <% if (r.od_status === 'PENDING') { %>
+              <% if (r.escalated_at) { %>
+                <span class="px-2.5 py-1 rounded-lg text-xs font-bold bg-amber-500/20 text-amber-300 border border-amber-500/30 animate-pulse">OD ESCALATED</span>
+              <% } else { %>
+                <span class="px-2.5 py-1 rounded-lg text-xs font-bold bg-amber-500/10 text-amber-400 border border-amber-500/20">OD PENDING</span>
+              <% } %>
+            <% } else if (r.od_status === 'APPROVED') { %>
+              <span class="px-2.5 py-1 rounded-lg text-xs font-bold bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">OD APPROVED</span>
+            <% } else if (r.od_status === 'REJECTED') { %>
+              <span class="px-2.5 py-1 rounded-lg text-xs font-bold bg-rose-500/10 text-rose-400 border border-rose-500/20">OD REJECTED</span>
+            <% } else if (r.od_status === 'CLOSED') { %>
+              <span class="px-2.5 py-1 rounded-lg text-xs font-bold bg-slate-800 text-slate-400 border border-slate-700">OD CLOSED</span>
+            <% } %>
+
+            <!-- Attendance Status Badge -->
+            <% if (r.attendance_status === 'PRESENT') { %>
+              <span class="px-2.5 py-1 rounded-lg text-xs font-bold bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">PRESENT</span>
+            <% } else if (r.attendance_status === 'ABSENT') { %>
+              <span class="px-2.5 py-1 rounded-lg text-xs font-bold bg-rose-500/20 text-rose-300 border border-rose-500/30">ABSENT</span>
+            <% } else { %>
+              <span class="px-2.5 py-1 rounded-lg text-xs font-bold bg-slate-800 text-slate-400 border border-slate-700">UNMARKED</span>
+            <% } %>
+
+            <!-- OD Approved but Absent Alert Flag -->
+            <% if (r.od_status === 'APPROVED' && r.attendance_status === 'ABSENT') { %>
+              <span class="px-2.5 py-1 rounded-lg text-xs font-bold bg-rose-500/20 text-rose-300 border border-rose-500/40 animate-pulse">⚠️ OD APPROVED BUT ABSENT</span>
+            <% } %>
+
+            <span class="text-xs text-indigo-400 font-mono font-bold"><%= r.club_name %> (<%= r.club_code %>)</span>
+            <span class="text-xs text-slate-400">📅 <%= r.event_date %> (<%= r.start_time %> - <%= r.end_time %>)</span>
+            <span class="text-xs text-slate-400">📍 <%= r.venue %></span>
+          </div>
+
+          <h3 class="text-xl font-bold text-white tracking-tight">
+            <a href="/student/events/<%= r.event_id %>" class="hover:text-indigo-400 transition"><%= r.event_title %></a>
+          </h3>
+
+          <p class="text-xs text-slate-300 line-clamp-2"><%= r.description %></p>
+
+          <div class="text-xs text-slate-500 font-mono">
+            Registered on: <%= r.registered_at %>
+          </div>
+
+          <% if (r.od_status === 'PENDING' || r.od_status === 'APPROVED') { %>
+            <div class="p-2.5 bg-amber-500/10 border border-amber-500/20 rounded-xl text-xs text-amber-300 flex items-center justify-between">
+              <span>⚠️ <strong>OD Application Active:</strong> Application is <%= r.od_status %>. Registration cancellation is locked.</span>
+              <a href="/student/od/<%= r.od_id %>" class="font-bold underline text-amber-200 hover:text-white">View OD</a>
+            </div>
+          <% } %>
+        </div>
+
+        <!-- Action Controls -->
+        <div class="flex flex-col sm:flex-row md:flex-col items-stretch md:items-end gap-2 min-w-[200px]">
+          
+          <!-- Apply for OD Button -->
+          <% if (!r.od_status || r.od_status === 'REJECTED' || r.od_status === 'CLOSED') { %>
+            <% if (r.event_status === 'APPROVED' || r.event_status === 'ONGOING') { %>
+              <% if (r.od_status === 'REJECTED') { %>
+                <a href="/student/od/apply?registrationId=<%= r.registration_id %>" class="px-4 py-2 bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-xs rounded-xl shadow shadow-indigo-600/30 text-center transition">
+                  Re-apply for OD
+                </a>
+              <% } else { %>
+                <a href="/student/od/apply?registrationId=<%= r.registration_id %>" class="px-4 py-2 bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs rounded-xl shadow shadow-emerald-600/30 text-center transition">
+                  Apply for OD
+                </a>
+              <% } %>
+            <% } else { %>
+              <button disabled title="OD applications are only allowed for APPROVED or ONGOING events" class="px-4 py-2 bg-slate-800 text-slate-500 font-bold text-xs rounded-xl border border-slate-700 cursor-not-allowed text-center">
+                Apply for OD
+              </button>
+            <% } %>
+          <% } else if (r.od_status === 'PENDING') { %>
+            <a href="/student/od/<%= r.od_id %>" class="px-4 py-2 bg-amber-500/20 hover:bg-amber-500/30 text-amber-300 font-bold text-xs rounded-xl border border-amber-500/30 text-center transition">
+              View OD Status
+            </a>
+          <% } else if (r.od_status === 'APPROVED') { %>
+            <a href="/student/od/<%= r.od_id %>" class="px-4 py-2 bg-emerald-500/20 hover:bg-emerald-500/30 text-emerald-300 font-bold text-xs rounded-xl border border-emerald-500/30 text-center transition">
+              View OD Details
+            </a>
+          <% } %>
+
+          <!-- Cancel Registration Button (when allowed and no active OD request) -->
+          <% if (r.event_status === 'APPROVED' && (!r.od_status || r.od_status === 'REJECTED' || r.od_status === 'CLOSED')) { %>
+            <form action="/student/events/<%= r.event_id %>/cancel-registration" method="POST" class="w-full text-right" onsubmit="return confirm('Are you sure you want to cancel your registration for this event?');">
+              <input type="hidden" name="_csrf" value="<%= typeof csrfToken !== 'undefined' ? csrfToken : '' %>">
+              <button type="submit" class="w-full px-4 py-2 bg-rose-600/20 hover:bg-rose-600/30 text-rose-300 font-bold text-xs rounded-xl border border-rose-500/30 transition">
+                Cancel Registration
+              </button>
+            </form>
+          <% } else if (r.od_status === 'PENDING' || r.od_status === 'APPROVED') { %>
+            <button disabled title="OD request active: Cancellation locked" class="w-full px-4 py-2 bg-slate-800 text-slate-500 font-semibold text-xs rounded-xl border border-slate-700 cursor-not-allowed">
+              Cancellation Locked (OD Active)
+            </button>
+          <% } %>
+
+        </div>
+
+      </div>
+    <% }) %>
+  </div>
+
+</div>

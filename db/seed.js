@@ -183,6 +183,22 @@ async function seedDatabase() {
     periods.forEach(p => {
       stmtInsertPeriod.run(ttId, p.num, p.label, p.start, p.end, p.type);
     });
+
+    // ------------------------------------------------------------------------
+    // 6. GLOBAL SYSTEM BADGES SEEDING
+    // ------------------------------------------------------------------------
+    console.log('[SEED] Seeding global system milestone badge types...');
+    const globalBadges = [
+      { name: 'First Event', description: 'Awarded for attending your first campus club event', icon_name: 'sparkles' },
+      { name: '3-Event Streak', description: 'Awarded for attending 3 campus club events', icon_name: 'flame' },
+      { name: 'Club Volunteer', description: 'Awarded for serving as an event volunteer', icon_name: 'heart' },
+      { name: 'Event Organizer', description: 'Awarded for organizing a club event', icon_name: 'briefcase' }
+    ];
+
+    const stmtInsertBadge = db.prepare('INSERT INTO badges (club_id, name, description, icon_name) VALUES (NULL, ?, ?, ?)');
+    for (const gb of globalBadges) {
+      stmtInsertBadge.run(gb.name, gb.description, gb.icon_name);
+    }
   });
 
   // Execute seeding transaction

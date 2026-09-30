@@ -1,0 +1,81 @@
+<div class="space-y-8">
+
+  <!-- Header -->
+  <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-6 border-b border-slate-800">
+    <div>
+      <div class="text-xs font-bold uppercase tracking-wider text-indigo-400 mb-1">Faculty Coordinator Oversight</div>
+      <h1 class="text-2xl sm:text-3xl font-bold text-white tracking-tight">Supervised Club Certificates</h1>
+      <p class="text-sm text-slate-400 mt-1">Read-only institutional audit trail of issued and revoked certificates under your supervised clubs</p>
+    </div>
+  </div>
+
+  <!-- Certificates Table -->
+  <div class="bg-slate-800/60 border border-slate-700/60 rounded-2xl overflow-hidden shadow-xl">
+    <div class="p-4 bg-slate-900/80 border-b border-slate-700/60 flex items-center justify-between">
+      <h2 class="text-sm font-bold text-white uppercase tracking-wider font-mono">Issued Certificates Audit Trail</h2>
+      <span class="text-xs text-slate-400">Total: <%= certificates.length %></span>
+    </div>
+
+    <% if (certificates.length === 0) { %>
+      <div class="p-8 text-center text-slate-400 text-sm">
+        No certificates issued yet for your supervised clubs.
+      </div>
+    <% } else { %>
+      <div class="overflow-x-auto">
+        <table class="w-full text-left text-xs text-slate-300">
+          <thead class="bg-slate-900/80 text-slate-400 uppercase font-mono font-bold border-b border-slate-700/60">
+            <tr>
+              <th class="py-3.5 px-4">Student Name & RA</th>
+              <th class="py-3.5 px-4">Event & Club</th>
+              <th class="py-3.5 px-4">Role</th>
+              <th class="py-3.5 px-4 text-center">Status</th>
+              <th class="py-3.5 px-4 text-right">Actions</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-slate-700/40">
+            <% certificates.forEach(cert => { %>
+              <tr class="hover:bg-slate-700/20 transition">
+                
+                <td class="py-3.5 px-4">
+                  <div class="font-bold text-white text-sm"><%= cert.student_name %></div>
+                  <div class="text-[11px] text-indigo-400 font-mono"><%= cert.ra_number %></div>
+                </td>
+
+                <td class="py-3.5 px-4">
+                  <div class="font-semibold text-slate-200"><%= cert.event_title %></div>
+                  <div class="text-[11px] text-slate-400"><%= cert.club_name %> (<%= cert.club_code %>) | Date: <%= cert.event_date %></div>
+                </td>
+
+                <td class="py-3.5 px-4 font-mono font-bold text-indigo-300">
+                  <%= cert.role_type %>
+                </td>
+
+                <td class="py-3.5 px-4 text-center">
+                  <% if (cert.status === 'ISSUED') { %>
+                    <span class="px-2.5 py-1 rounded-lg text-xs font-bold bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">ISSUED</span>
+                  <% } else { %>
+                    <span class="px-2.5 py-1 rounded-lg text-xs font-bold bg-rose-500/20 text-rose-300 border border-rose-500/30">REVOKED</span>
+                    <div class="text-[10px] text-rose-400 mt-0.5"><%= cert.revocation_reason %></div>
+                  <% } %>
+                </td>
+
+                <td class="py-3.5 px-4 text-right">
+                  <div class="inline-flex items-center space-x-2">
+                    <a href="/verify/<%= cert.certificate_uuid %>" target="_blank" class="px-2.5 py-1 bg-slate-700 hover:bg-slate-600 text-slate-200 text-xs font-bold rounded-lg transition">
+                      Verify
+                    </a>
+                    <a href="/student/certificates/<%= cert.certificate_uuid %>/download" target="_blank" class="px-2.5 py-1 bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-bold rounded-lg transition">
+                      PDF
+                    </a>
+                  </div>
+                </td>
+
+              </tr>
+            <% }) %>
+          <% } %>
+        </table>
+      </div>
+    <% } %>
+  </div>
+
+</div>

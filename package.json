@@ -9,7 +9,7 @@
     "db:reset": "node db/seed.js",
     "routes": "node scripts/list_routes.js",
     "test:security": "node scripts/test_security.js",
-    "test:unit": "node scratch/test_timetable_module.js"
+    "test:unit": "node tests/test_timetable_module.js && node tests/test_event_domain.js && node tests/test_od_module.js && node tests/test_attendance_domain.js && node tests/test_qr_attendance.js && node tests/test_certificate_module.js && node tests/test_badge_module.js && node tests/test_analytics_module.js"
   },
   "dependencies": {
     "bcrypt": "^5.1.1",
@@ -23,6 +23,7 @@
     "express-rate-limit": "^7.4.0",
     "helmet": "^7.1.0",
     "jsonwebtoken": "^9.0.2",
+    "multer": "^2.4.0",
     "passport": "^0.7.0",
     "passport-google-oauth20": "^2.0.0",
     "pdfkit": "^0.15.0",

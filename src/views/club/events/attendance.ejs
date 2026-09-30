@@ -1,0 +1,194 @@
+<div class="space-y-8">
+
+  <!-- Header -->
+  <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-6 border-b border-slate-800">
+    <div>
+      <div class="text-xs font-bold uppercase tracking-wider text-indigo-400 mb-1">Attendance Management</div>
+      <h1 class="text-2xl sm:text-3xl font-bold text-white tracking-tight"><%= event.title %></h1>
+      <p class="text-sm text-slate-400 mt-1">Club: <span class="text-indigo-300 font-semibold"><%= event.club_name %></span> | Date: <%= event.event_date %> (<%= event.start_time %> - <%= event.end_time %>) | Venue: <%= event.venue %></p>
+    </div>
+    <div class="flex items-center space-x-2">
+      <% if (event.status === 'ONGOING') { %>
+        <a href="/club/events/<%= event.id %>/checkin" class="px-4 py-2 bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-xs rounded-xl shadow-lg shadow-indigo-600/30 transition flex items-center space-x-2">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v1m6 11h2m-6 0h-2v4m0-11v3m0 0h.01M12 12h4.01M16 20h4M4 12h4m12 0h.01M5 8h2a1 1 0 001-1V5a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1zm12 0h2a1 1 0 001-1V5a1 1 0 00-1-1h-2a1 1 0 00-1 1v2a1 1 0 001 1zM5 20h2a1 1 0 001-1v-2a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1z"></path></svg>
+          <span>Launch QR Check-In</span>
+        </a>
+      <% } %>
+      <a href="/club/events/<%= event.id %>" class="px-3.5 py-2 bg-slate-800 hover:bg-slate-700 text-slate-300 font-semibold text-xs rounded-xl border border-slate-700 transition">
+        &larr; Back to Event
+      </a>
+    </div>
+  </div>
+
+  <!-- Alerts -->
+  <% if (typeof success !== 'undefined' && success) { %>
+    <div class="p-4 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-sm flex items-center space-x-2">
+      <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
+      <span><%= success %></span>
+    </div>
+  <% } %>
+
+  <% if (typeof error !== 'undefined' && error) { %>
+    <div class="p-4 rounded-xl bg-rose-500/10 border border-rose-500/20 text-rose-400 text-sm flex items-start space-x-2">
+      <svg class="w-5 h-5 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+      <div>
+        <strong class="font-bold block">Attendance Error</strong>
+        <span><%= error %></span>
+      </div>
+    </div>
+  <% } %>
+
+  <!-- Read-Only Event Status Banner -->
+  <% if (!isEditable) { %>
+    <div class="p-4 bg-amber-500/10 border border-amber-500/20 rounded-2xl text-amber-300 text-sm flex items-start space-x-3">
+      <svg class="w-5 h-5 text-amber-400 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+      <div>
+        <strong class="font-bold block">Read-Only View (Event Status: <%= event.status %>)</strong>
+        <span>Attendance marking is locked. Attendance can only be recorded when the event is <strong>ONGOING</strong> or <strong>COMPLETED</strong>.</span>
+      </div>
+    </div>
+  <% } %>
+
+  <!-- Summary Metric Counters -->
+  <div class="grid grid-cols-2 sm:grid-cols-4 gap-4">
+    <div class="p-4 bg-slate-800/60 border border-slate-700/60 rounded-2xl">
+      <div class="text-slate-400 text-xs font-bold uppercase tracking-wider font-mono">Total Registered</div>
+      <div class="text-2xl font-extrabold text-white mt-1" id="stat-registered"><%= summary.totalRegistered %></div>
+    </div>
+    <div class="p-4 bg-emerald-500/10 border border-emerald-500/20 rounded-2xl">
+      <div class="text-emerald-400 text-xs font-bold uppercase tracking-wider font-mono">Present</div>
+      <div class="text-2xl font-extrabold text-emerald-400 mt-1" id="stat-present"><%= summary.presentCount %></div>
+    </div>
+    <div class="p-4 bg-rose-500/10 border border-rose-500/20 rounded-2xl">
+      <div class="text-rose-400 text-xs font-bold uppercase tracking-wider font-mono">Absent</div>
+      <div class="text-2xl font-extrabold text-rose-400 mt-1" id="stat-absent"><%= summary.absentCount %></div>
+    </div>
+    <div class="p-4 bg-amber-500/10 border border-amber-500/20 rounded-2xl">
+      <div class="text-amber-400 text-xs font-bold uppercase tracking-wider font-mono">Unmarked</div>
+      <div class="text-2xl font-extrabold text-amber-400 mt-1" id="stat-unmarked"><%= summary.unmarkedCount %></div>
+    </div>
+  </div>
+
+  <!-- Search Box & Actions Bar -->
+  <div class="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-4">
+    <div class="relative flex-1 max-w-md">
+      <input type="text" id="attendanceSearch" placeholder="Search by student name, RA number or department..." class="w-full pl-10 pr-4 py-2.5 bg-slate-900 border border-slate-700 rounded-xl text-white text-xs placeholder-slate-500 focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500">
+      <svg class="w-4 h-4 text-slate-500 absolute left-3.5 top-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
+    </div>
+
+    <% if (isEditable && roster.length > 0) { %>
+      <form action="/club/events/<%= event.id %>/attendance/mark-all-present" method="POST" onsubmit="return confirm('Are you sure you want to mark ALL registered students as PRESENT?');">
+        <input type="hidden" name="_csrf" value="<%= typeof csrfToken !== 'undefined' ? csrfToken : '' %>">
+        <button type="submit" class="w-full sm:w-auto px-4 py-2.5 bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs rounded-xl shadow-md shadow-emerald-600/30 transition flex items-center justify-center space-x-2">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
+          <span>Mark All Present</span>
+        </button>
+      </form>
+    <% } %>
+  </div>
+
+  <!-- Roster Table / Mobile Cards -->
+  <div class="bg-slate-800/60 border border-slate-700/60 rounded-2xl overflow-hidden shadow-xl">
+    <% if (roster.length === 0) { %>
+      <div class="p-8 text-center text-slate-400 text-sm">
+        No registered students found for this event yet.
+      </div>
+    <% } else { %>
+      <div class="overflow-x-auto">
+        <table class="w-full text-left text-xs text-slate-300">
+          <thead class="bg-slate-900/80 text-slate-400 uppercase font-mono font-bold border-b border-slate-700/60">
+            <tr>
+              <th class="py-3.5 px-4">Student</th>
+              <th class="py-3.5 px-4">RA Number</th>
+              <th class="py-3.5 px-4">Department & Class</th>
+              <th class="py-3.5 px-4 text-center">Current Status</th>
+              <th class="py-3.5 px-4 text-right">Actions</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-slate-700/40" id="rosterTbody">
+            <% roster.forEach(student => { %>
+              <tr class="hover:bg-slate-700/20 transition roster-row" data-search="<%= (student.student_name + ' ' + student.ra_number + ' ' + student.department).toLowerCase() %>">
+                
+                <td class="py-3.5 px-4">
+                  <div class="font-bold text-white text-sm"><%= student.student_name %></div>
+                  <div class="text-[11px] text-slate-400 font-mono"><%= student.email %></div>
+                </td>
+
+                <td class="py-3.5 px-4 font-mono font-bold text-indigo-400">
+                  <%= student.ra_number %>
+                </td>
+
+                <td class="py-3.5 px-4">
+                  <div class="font-semibold text-slate-200"><%= student.department %></div>
+                  <div class="text-[11px] text-slate-400">Year <%= student.year_of_study %> - Sec <%= student.section %></div>
+                </td>
+
+                <td class="py-3.5 px-4 text-center">
+                  <% if (student.attendance_status === 'PRESENT') { %>
+                    <span class="px-2.5 py-1 rounded-lg text-xs font-bold bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">PRESENT</span>
+                    <span class="px-2 py-0.5 rounded text-[10px] font-mono font-bold bg-indigo-500/20 text-indigo-300 border border-indigo-500/30 ml-1"><%= student.attendance_method || 'MANUAL' %></span>
+                  <% } else if (student.attendance_status === 'ABSENT') { %>
+                    <span class="px-2.5 py-1 rounded-lg text-xs font-bold bg-rose-500/20 text-rose-300 border border-rose-500/30">ABSENT</span>
+                    <span class="px-2 py-0.5 rounded text-[10px] font-mono font-bold bg-slate-700 text-slate-400 border border-slate-600 ml-1"><%= student.attendance_method || 'MANUAL' %></span>
+                  <% } else { %>
+                    <span class="px-2.5 py-1 rounded-lg text-xs font-bold bg-amber-500/10 text-amber-400 border border-amber-500/20">UNMARKED</span>
+                  <% } %>
+
+                  <% if (student.certificate_id) { %>
+                    <div class="text-[10px] text-amber-400 font-mono mt-1">📜 Certificate Issued</div>
+                  <% } %>
+                </td>
+
+                <td class="py-3.5 px-4 text-right">
+                  <% if (isEditable) { %>
+                    <div class="inline-flex items-center space-x-2">
+                      <!-- Mark Present Form -->
+                      <form action="/club/events/<%= event.id %>/attendance/mark" method="POST" class="inline">
+                        <input type="hidden" name="_csrf" value="<%= typeof csrfToken !== 'undefined' ? csrfToken : '' %>">
+                        <input type="hidden" name="studentUserId" value="<%= student.student_user_id %>">
+                        <input type="hidden" name="status" value="PRESENT">
+                        <button type="submit" <%= student.attendance_status === 'PRESENT' ? 'disabled' : '' %> class="px-3 py-1.5 rounded-lg text-xs font-bold transition <%= student.attendance_status === 'PRESENT' ? 'bg-emerald-600 text-white opacity-60 cursor-default' : 'bg-slate-700 hover:bg-emerald-600 text-slate-300 hover:text-white' %>">
+                          Present
+                        </button>
+                      </form>
+
+                      <!-- Mark Absent Form -->
+                      <form action="/club/events/<%= event.id %>/attendance/mark" method="POST" class="inline">
+                        <input type="hidden" name="_csrf" value="<%= typeof csrfToken !== 'undefined' ? csrfToken : '' %>">
+                        <input type="hidden" name="studentUserId" value="<%= student.student_user_id %>">
+                        <input type="hidden" name="status" value="ABSENT">
+                        <button type="submit" <%= (student.attendance_status === 'ABSENT' || student.certificate_id) ? 'disabled' : '' %> title="<%= student.certificate_id ? 'Cannot mark ABSENT because a certificate has been issued' : '' %>" class="px-3 py-1.5 rounded-lg text-xs font-bold transition <%= student.attendance_status === 'ABSENT' ? 'bg-rose-600 text-white opacity-60 cursor-default' : (student.certificate_id ? 'bg-slate-800 text-slate-600 cursor-not-allowed border border-slate-700' : 'bg-slate-700 hover:bg-rose-600 text-slate-300 hover:text-white') %>">
+                          Absent
+                        </button>
+                      </form>
+                    </div>
+                  <% } else { %>
+                    <span class="text-xs text-slate-500 font-mono">Read-Only</span>
+                  <% } %>
+                </td>
+
+              </tr>
+            <% }) %>
+          </tbody>
+        </table>
+      </div>
+    <% } %>
+  </div>
+
+</div>
+
+<script>
+  // Client-side search filtering
+  document.getElementById('attendanceSearch')?.addEventListener('input', function(e) {
+    const q = e.target.value.toLowerCase().trim();
+    const rows = document.querySelectorAll('.roster-row');
+    rows.forEach(row => {
+      const searchData = row.getAttribute('data-search') || '';
+      if (!q || searchData.includes(q)) {
+        row.style.display = '';
+      } else {
+        row.style.display = 'none';
+      }
+    });
+  });
+</script>

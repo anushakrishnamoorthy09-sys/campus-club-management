@@ -1,0 +1,150 @@
+<div class="space-y-8">
+
+  <!-- Header -->
+  <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-6 border-b border-slate-800">
+    <div>
+      <h1 class="text-2xl sm:text-3xl font-bold text-white tracking-tight">On-Duty (OD) Approvals</h1>
+      <p class="text-sm text-slate-400 mt-1">Review student On-Duty applications, evaluate period coverage, and record mentor authorizations</p>
+    </div>
+    <div class="flex items-center space-x-2">
+      <span class="px-3 py-1.5 bg-indigo-500/10 border border-indigo-500/20 text-indigo-400 font-mono text-xs font-bold rounded-xl">
+        CLASS MENTOR SCOPE
+      </span>
+    </div>
+  </div>
+
+  <!-- Alerts -->
+  <% if (typeof success !== 'undefined' && success) { %>
+    <div class="p-4 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-sm flex items-center space-x-2">
+      <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
+      <span><%= success %></span>
+    </div>
+  <% } %>
+
+  <% if (typeof error !== 'undefined' && error) { %>
+    <div class="p-4 rounded-xl bg-rose-500/10 border border-rose-500/20 text-rose-400 text-sm flex items-start space-x-2">
+      <svg class="w-5 h-5 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+      <div>
+        <strong class="font-bold block">Review Error</strong>
+        <span><%= error %></span>
+      </div>
+    </div>
+  <% } %>
+
+  <!-- Tab Controls -->
+  <div class="flex border-b border-slate-700/60 space-x-4 text-sm font-semibold">
+    <a href="/faculty/od?tab=pending" class="pb-3 border-b-2 transition <%= activeTab !== 'history' ? 'border-indigo-500 text-white font-bold' : 'border-transparent text-slate-400 hover:text-slate-200' %>">
+      Pending Review Queue (<%= pendingODs.length %>)
+    </a>
+    <a href="/faculty/od?tab=history" class="pb-3 border-b-2 transition <%= activeTab === 'history' ? 'border-indigo-500 text-white font-bold' : 'border-transparent text-slate-400 hover:text-slate-200' %>">
+      Decisions History (<%= decisionHistory.length %>)
+    </a>
+  </div>
+
+  <% if (activeTab !== 'history') { %>
+    <!-- PENDING MENTEE OD QUEUE -->
+    <div class="grid grid-cols-1 gap-6">
+      <% if (pendingODs.length === 0) { %>
+        <div class="p-8 bg-slate-800/40 border border-slate-700/40 rounded-2xl text-center text-slate-400 text-sm">
+          🎉 No pending OD applications awaiting your review.
+        </div>
+      <% } %>
+
+      <% pendingODs.forEach(od => { %>
+        <div class="bg-slate-800/60 border border-slate-700/60 rounded-2xl p-6 shadow-xl flex flex-col lg:flex-row lg:items-center justify-between gap-6">
+          
+          <div class="space-y-4 max-w-3xl flex-1">
+            <!-- Student Header -->
+            <div class="flex flex-wrap items-center gap-2">
+              <span class="px-2.5 py-1 rounded-lg text-xs font-bold bg-amber-500/10 text-amber-400 border border-amber-500/20">PENDING MENTOR REVIEW</span>
+              <span class="text-xs text-slate-400 font-mono">⏳ Waiting: <strong class="text-amber-300"><%= od.timeWaited %></strong></span>
+              <span class="text-xs text-indigo-400 font-mono font-bold"><%= od.club_name %> (<%= od.club_code %>)</span>
+            </div>
+
+            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+              <div>
+                <h3 class="text-lg font-bold text-white tracking-tight">
+                  <%= od.student_name %> <span class="text-xs text-slate-400 font-mono font-normal">(RA: <%= od.ra_number %>)</span>
+                </h3>
+                <div class="text-xs text-slate-400">
+                  Dept: <span class="text-slate-200 font-semibold"><%= od.department %></span> | Year <%= od.year_of_study %> - Sec <%= od.section %>
+                </div>
+              </div>
+              
+              <!-- Past OD Summary Badge -->
+              <div class="p-2 bg-slate-900/60 rounded-xl border border-slate-700/60 text-[11px] text-slate-300 font-mono">
+                Past ODs: <strong><%= od.studentHistory.total %></strong> Total (<span class="text-emerald-400"><%= od.studentHistory.approved %> Approved</span>, <span class="text-rose-400"><%= od.studentHistory.rejected %> Rejected</span>)
+              </div>
+            </div>
+
+            <!-- Event & Time Details -->
+            <div class="p-4 bg-slate-900/60 rounded-xl border border-slate-700/60 space-y-2">
+              <div class="text-xs font-bold text-white">Event: <%= od.event_title %></div>
+              <div class="text-xs text-slate-400 flex flex-wrap gap-4">
+                <span>📍 Venue: <strong class="text-slate-200"><%= od.event_venue %></strong></span>
+                <span>📅 Date: <strong class="text-slate-200"><%= od.event_date %></strong> (<%= formatTime12h(od.start_time) %> - <%= formatTime12h(od.end_time) %>)</span>
+                <span>Attendance: <strong class="<%= od.attendance_status === 'PRESENT' ? 'text-emerald-400' : (od.attendance_status === 'ABSENT' ? 'text-rose-400' : 'text-slate-400') %>"><%= od.attendance_status || 'Unmarked' %></strong></span>
+                <% if (od.status === 'APPROVED' && od.attendance_status === 'ABSENT') { %>
+                  <span class="px-2 py-0.5 rounded text-[10px] font-bold bg-rose-500/20 text-rose-300 border border-rose-500/40 animate-pulse">⚠️ OD APPROVED BUT ABSENT</span>
+                <% } %>
+              </div>
+
+              <!-- AFFECTED PERIODS SUMMARY -->
+              <div class="pt-2 border-t border-slate-800 flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-xs">
+                <div class="text-indigo-300 font-bold font-mono">
+                  ⏰ Missed Periods: <%= formatPeriodSummary(od.periods) %>
+                </div>
+                <div class="text-emerald-400 font-mono text-right">
+                  Total Duration: <%= formatTotalMinutes(od.periods) %>
+                </div>
+              </div>
+            </div>
+
+          </div>
+
+          <!-- Quick Action Controls -->
+          <div class="flex flex-col sm:flex-row lg:flex-col items-stretch lg:items-end gap-2.5 min-w-[220px] flex-shrink-0">
+            <a href="/faculty/od/<%= od.id %>" class="w-full px-4 py-2.5 bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-xs rounded-xl transition text-center shadow shadow-indigo-600/30">
+              Review & Decide &rarr;
+            </a>
+          </div>
+
+        </div>
+      <% }) %>
+    </div>
+  <% } else { %>
+    <!-- DECISIONS HISTORY TAB -->
+    <div class="grid grid-cols-1 gap-6">
+      <% if (decisionHistory.length === 0) { %>
+        <div class="p-8 bg-slate-800/40 border border-slate-700/40 rounded-2xl text-center text-slate-400 text-sm">
+          No past decisions recorded yet.
+        </div>
+      <% } %>
+
+      <% decisionHistory.forEach(od => { %>
+        <div class="bg-slate-800/60 border border-slate-700/60 rounded-2xl p-6 shadow-xl space-y-4">
+          <div class="flex flex-wrap items-center justify-between gap-4">
+            <div class="flex items-center space-x-2">
+              <% if (od.status === 'APPROVED') { %>
+                <span class="px-2.5 py-1 rounded-lg text-xs font-bold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">APPROVED</span>
+              <% } else if (od.status === 'REJECTED') { %>
+                <span class="px-2.5 py-1 rounded-lg text-xs font-bold bg-rose-500/10 text-rose-400 border border-rose-500/20">REJECTED</span>
+              <% } else { %>
+                <span class="px-2.5 py-1 rounded-lg text-xs font-bold bg-slate-800 text-slate-400 border border-slate-700"><%= od.status %></span>
+              <% } %>
+              <span class="text-xs text-white font-bold"><%= od.student_name %> (<%= od.ra_number %>)</span>
+              <span class="text-xs text-slate-400">for <strong><%= od.event_title %></strong></span>
+            </div>
+            <div class="text-xs text-slate-400 font-mono">Reviewed at: <%= od.reviewed_at %></div>
+          </div>
+
+          <div class="p-3 bg-slate-900/60 rounded-xl border border-slate-700/60 text-xs flex flex-wrap justify-between gap-2">
+            <div class="text-slate-300 font-mono">Periods: <strong><%= formatPeriodSummary(od.periods) %></strong></div>
+            <div class="text-slate-300">Faculty Remark: <em>"<%= od.faculty_remark || 'None' %>"</em></div>
+          </div>
+        </div>
+      <% }) %>
+    </div>
+  <% } %>
+
+</div>

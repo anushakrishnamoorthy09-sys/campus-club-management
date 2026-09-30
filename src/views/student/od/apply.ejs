@@ -1,0 +1,155 @@
+<div class="max-w-4xl mx-auto space-y-6">
+
+  <!-- Header -->
+  <div class="flex items-center justify-between pb-4 border-b border-slate-800">
+    <div>
+      <div class="text-xs font-bold uppercase tracking-wider text-indigo-400 mb-1">On-Duty Application Preview</div>
+      <h1 class="text-2xl sm:text-3xl font-bold text-white tracking-tight">Apply for On-Duty (OD)</h1>
+      <p class="text-slate-400 text-xs sm:text-sm mt-1">Review calculated academic periods missed and submit for Class Mentor authorization</p>
+    </div>
+    <a href="/student/registrations" class="px-3.5 py-2 bg-slate-800 hover:bg-slate-700 text-slate-300 font-semibold text-xs rounded-xl border border-slate-700 transition">
+      &larr; Back to Registrations
+    </a>
+  </div>
+
+  <!-- Alerts -->
+  <% if (typeof error !== 'undefined' && error) { %>
+    <div class="p-4 rounded-xl bg-rose-500/10 border border-rose-500/20 text-rose-400 text-sm flex items-start space-x-2">
+      <svg class="w-5 h-5 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+      <div>
+        <strong class="font-bold block">Application Error</strong>
+        <span><%= error %></span>
+      </div>
+    </div>
+  <% } %>
+
+  <% if (isBlocked) { %>
+    <!-- Clear Blocking Message Container -->
+    <div class="p-6 bg-slate-800/80 border border-rose-500/30 rounded-2xl space-y-4 shadow-xl">
+      <div class="flex items-center space-x-3 text-rose-400">
+        <div class="p-3 bg-rose-500/10 rounded-xl border border-rose-500/20">
+          <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636"></path></svg>
+        </div>
+        <div>
+          <h2 class="text-lg font-bold text-white">On-Duty Request Blocked</h2>
+          <p class="text-xs text-rose-300">An On-Duty application cannot be created or submitted for this event.</p>
+        </div>
+      </div>
+
+      <div class="p-4 bg-slate-900/60 rounded-xl border border-slate-700/60 text-slate-300 text-sm">
+        <strong>Reason:</strong> <%= blockReason %>
+      </div>
+
+      <div class="pt-2">
+        <a href="/student/registrations" class="inline-flex items-center px-4 py-2.5 bg-indigo-600 hover:bg-indigo-500 text-white font-semibold text-xs rounded-xl transition shadow-lg shadow-indigo-600/30">
+          Return to My Registrations
+        </a>
+      </div>
+    </div>
+  <% } else { %>
+    <!-- Valid Preview & Submission Card -->
+    <div class="bg-slate-800/60 border border-slate-700/60 rounded-2xl p-6 sm:p-8 space-y-6 shadow-xl">
+      
+      <!-- Event Information Header -->
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-6 pb-6 border-b border-slate-700/60">
+        <div>
+          <div class="text-xs text-indigo-400 font-mono font-bold uppercase tracking-wider mb-1"><%= event.club_name %></div>
+          <h2 class="text-xl sm:text-2xl font-bold text-white tracking-tight"><%= event.title %></h2>
+          <p class="text-slate-400 text-xs mt-1">📍 Venue: <span class="text-slate-200 font-semibold"><%= event.venue %></span></p>
+        </div>
+        <div class="md:text-right space-y-1 text-xs">
+          <div class="text-slate-400">Scheduled Event Date:</div>
+          <div class="text-base font-bold text-white font-mono">📅 <%= event.event_date %></div>
+          <div class="text-slate-300">⏰ <%= formatTime12h(event.start_time) %> - <%= formatTime12h(event.end_time) %></div>
+        </div>
+      </div>
+
+      <!-- Automatically Calculated Period Impact -->
+      <div class="space-y-4">
+        <div class="flex items-center justify-between">
+          <h3 class="text-base font-bold text-white tracking-tight flex items-center space-x-2">
+            <svg class="w-5 h-5 text-indigo-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+            <span>Automatically Calculated Academic Period Impact</span>
+          </h3>
+          <span class="px-3 py-1 bg-indigo-500/10 border border-indigo-500/20 text-indigo-400 font-mono text-xs font-bold rounded-lg">
+            <%= periods.length %> CLASS Period<%= periods.length > 1 ? 's' : '' %> Missed
+          </span>
+        </div>
+
+        <!-- Period Summary Pill Box -->
+        <div class="p-4 bg-indigo-950/40 border border-indigo-500/30 rounded-xl flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+          <div>
+            <div class="text-xs text-indigo-300 uppercase font-mono font-bold tracking-wider mb-1">Missed Academic Periods</div>
+            <div class="text-lg sm:text-xl font-extrabold text-white tracking-tight">
+              <%= periodSummary %>
+            </div>
+          </div>
+          <div class="sm:text-right border-t sm:border-t-0 sm:border-l border-indigo-500/20 pt-2 sm:pt-0 sm:pl-4">
+            <div class="text-xs text-indigo-300 uppercase font-mono font-bold tracking-wider mb-1">Total Missed Duration</div>
+            <div class="text-lg font-bold text-emerald-400 font-mono">
+              ⏱️ <%= totalMinutesFormatted %>
+            </div>
+          </div>
+        </div>
+
+        <!-- Period Breakdown Table -->
+        <div class="overflow-x-auto rounded-xl border border-slate-700/60">
+          <table class="w-full text-left text-xs text-slate-300">
+            <thead class="bg-slate-900/80 text-slate-400 uppercase font-mono font-bold border-b border-slate-700/60">
+              <tr>
+                <th class="py-3 px-4">Period #</th>
+                <th class="py-3 px-4">Period Label</th>
+                <th class="py-3 px-4">Class Time</th>
+                <th class="py-3 px-4">Type</th>
+              </tr>
+            </thead>
+            <tbody class="divide-y divide-slate-700/40">
+              <% periods.forEach(p => { %>
+                <tr class="hover:bg-slate-700/20 transition">
+                  <td class="py-3 px-4 font-mono font-bold text-indigo-400">#<%= p.period_number %></td>
+                  <td class="py-3 px-4 font-semibold text-white"><%= p.period_label || p.label || ('Period ' + p.period_number) %></td>
+                  <td class="py-3 px-4 font-mono text-slate-300"><%= formatTime12h(p.start_time) %> - <%= formatTime12h(p.end_time) %></td>
+                  <td class="py-3 px-4">
+                    <span class="px-2 py-0.5 rounded text-[10px] font-bold uppercase bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">CLASS</span>
+                  </td>
+                </tr>
+              <% }) %>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Class Mentor Authorization Details -->
+      <div class="p-4 bg-slate-900/60 rounded-xl border border-slate-700/60 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div>
+          <div class="text-xs text-slate-400 font-medium">Assigned Class Mentor for Review:</div>
+          <div class="text-base font-bold text-white flex items-center space-x-2 mt-0.5">
+            <svg class="w-4 h-4 text-sky-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path></svg>
+            <span><%= mentorName %></span>
+          </div>
+        </div>
+        <div class="text-xs text-slate-400 font-mono sm:text-right">
+          <div>Department: <span class="text-slate-200"><%= studentProfile.department %></span></div>
+          <div>Section: <span class="text-slate-200"><%= studentProfile.year_of_study %> Year - Sec <%= studentProfile.section %></span></div>
+        </div>
+      </div>
+
+      <!-- Form Submission -->
+      <form action="/student/od/request" method="POST" class="pt-4 border-t border-slate-700/60 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <input type="hidden" name="_csrf" value="<%= typeof csrfToken !== 'undefined' ? csrfToken : '' %>">
+        <input type="hidden" name="registrationId" value="<%= registration.registration_id %>">
+
+        <p class="text-xs text-slate-400">
+          By clicking Submit, your calculated period impact will be sent to your Class Mentor for institutional OD approval.
+        </p>
+
+        <button type="submit" class="w-full sm:w-auto px-6 py-3 bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-sm rounded-xl transition shadow-lg shadow-emerald-600/30 flex items-center justify-center space-x-2 flex-shrink-0">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+          <span>Submit On-Duty Application</span>
+        </button>
+      </form>
+
+    </div>
+  <% } %>
+
+</div>

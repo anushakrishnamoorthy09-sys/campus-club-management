@@ -1,0 +1,198 @@
+<div class="space-y-8 max-w-6xl mx-auto py-4">
+
+  <!-- Header Banner Profile Card -->
+  <div class="bg-gradient-to-r from-slate-900 via-indigo-950 to-slate-900 border border-slate-700/80 rounded-3xl p-6 sm:p-8 shadow-2xl relative overflow-hidden">
+    <div class="flex flex-col md:flex-row md:items-center justify-between gap-6 relative z-10">
+      
+      <div class="flex items-center space-x-4 sm:space-x-6">
+        <!-- Avatar Circle -->
+        <div class="w-16 h-16 sm:w-20 sm:h-20 rounded-2xl bg-indigo-600/30 border-2 border-indigo-500/50 flex items-center justify-center text-white font-black text-2xl sm:text-3xl shadow-xl shadow-indigo-600/20">
+          <%= student.full_name.charAt(0).toUpperCase() %>
+        </div>
+
+        <div>
+          <div class="text-xs font-bold uppercase tracking-wider text-indigo-400 font-mono mb-1">Student Profile</div>
+          <h1 class="text-2xl sm:text-3xl font-extrabold text-white tracking-tight"><%= student.full_name %></h1>
+          
+          <div class="flex flex-wrap items-center gap-3 mt-2 text-xs text-slate-300">
+            <!-- RA Number (Read-only) -->
+            <span class="px-3 py-1 rounded-lg bg-indigo-500/20 text-indigo-300 border border-indigo-500/30 font-mono font-bold" title="Institutional RA Number (Read-Only)">
+              RA: <%= student.ra_number %>
+            </span>
+
+            <span><%= student.department %></span>
+            <span class="text-slate-500">•</span>
+            <span>Year <%= student.year_of_study %> - Sec <%= student.section %></span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Action Button: Export Portfolio PDF -->
+      <div class="flex items-center space-x-3">
+        <a href="/student/portfolio.pdf" target="_blank" class="px-4 py-2.5 bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-xs rounded-xl shadow-lg shadow-indigo-600/30 transition flex items-center space-x-2">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
+          <span>Export Portfolio (PDF)</span>
+        </a>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- Key Metrics Dashboard Grid -->
+  <div class="grid grid-cols-2 sm:grid-cols-4 gap-4">
+    <div class="p-5 bg-slate-800/60 border border-slate-700/60 rounded-2xl">
+      <div class="text-slate-400 text-xs font-bold uppercase tracking-wider font-mono">Events Attended</div>
+      <div class="text-3xl font-extrabold text-white mt-2"><%= metrics.eventsAttendedCount %></div>
+    </div>
+
+    <div class="p-5 bg-indigo-500/10 border border-indigo-500/20 rounded-2xl">
+      <div class="text-indigo-400 text-xs font-bold uppercase tracking-wider font-mono">OD Approval Rate</div>
+      <div class="text-3xl font-extrabold text-indigo-400 mt-2"><%= metrics.odApprovalRate %></div>
+      <div class="text-[10px] text-slate-400 mt-1 font-mono"><%= metrics.approvedOdRequests %> approved / <%= metrics.totalOdRequests %> requests</div>
+    </div>
+
+    <div class="p-5 bg-emerald-500/10 border border-emerald-500/20 rounded-2xl">
+      <div class="text-emerald-400 text-xs font-bold uppercase tracking-wider font-mono">Certificates Earned</div>
+      <div class="text-3xl font-extrabold text-emerald-400 mt-2"><%= metrics.totalCertificatesCount %></div>
+    </div>
+
+    <div class="p-5 bg-amber-500/10 border border-amber-500/20 rounded-2xl">
+      <div class="text-amber-400 text-xs font-bold uppercase tracking-wider font-mono">Badges Showcase</div>
+      <div class="text-3xl font-extrabold text-amber-400 mt-2"><%= metrics.totalBadgesCount %></div>
+    </div>
+  </div>
+
+  <!-- Main Content Grid -->
+  <div class="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+
+    <!-- Left Column: Class Mentor, Joined Clubs & Certificates -->
+    <div class="lg:col-span-6 space-y-6">
+
+      <!-- Class Mentor Profile Block -->
+      <div class="bg-slate-800/60 border border-slate-700/60 rounded-2xl p-5 shadow-xl space-y-3">
+        <h3 class="text-xs font-bold uppercase tracking-wider text-slate-400 font-mono">Assigned Class Mentor</h3>
+        <div class="flex items-center space-x-3">
+          <div class="w-10 h-10 rounded-xl bg-slate-700 text-indigo-300 font-bold flex items-center justify-center text-sm border border-slate-600">
+            👨‍🏫
+          </div>
+          <div>
+            <div class="font-bold text-white text-sm"><%= student.mentor_name || 'Unassigned Class Mentor' %></div>
+            <div class="text-xs text-slate-400 font-mono"><%= student.mentor_email || 'Contact Administration' %></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Joined Campus Clubs -->
+      <div class="bg-slate-800/60 border border-slate-700/60 rounded-2xl p-6 shadow-xl space-y-4">
+        <h3 class="text-sm font-bold text-white uppercase tracking-wider font-mono flex items-center justify-between">
+          <span>Joined Clubs (<%= clubsJoined.length %>)</span>
+        </h3>
+
+        <% if (clubsJoined.length === 0) { %>
+          <p class="text-xs text-slate-400">Not joined any campus clubs yet.</p>
+        <% } else { %>
+          <div class="space-y-3">
+            <% clubsJoined.forEach(club => { %>
+              <div class="p-3.5 bg-slate-900/60 rounded-xl border border-slate-700/60 flex items-center justify-between">
+                <div>
+                  <div class="font-bold text-white text-sm"><%= club.club_name %></div>
+                  <div class="text-xs text-indigo-400 font-mono"><%= club.club_code %></div>
+                </div>
+                <div class="text-right">
+                  <span class="px-2.5 py-0.5 rounded text-[11px] font-bold bg-indigo-500/20 text-indigo-300 border border-indigo-500/30">
+                    <%= club.role_name || 'Member' %>
+                  </span>
+                </div>
+              </div>
+            <% }) %>
+          </div>
+        <% } %>
+      </div>
+
+      <!-- Issued Certificates List -->
+      <div class="bg-slate-800/60 border border-slate-700/60 rounded-2xl p-6 shadow-xl space-y-4">
+        <div class="flex items-center justify-between">
+          <h3 class="text-sm font-bold text-white uppercase tracking-wider font-mono">Issued Certificates</h3>
+          <a href="/student/certificates" class="text-xs text-indigo-400 hover:text-indigo-300 font-semibold">View All &rarr;</a>
+        </div>
+
+        <% if (certificates.length === 0) { %>
+          <p class="text-xs text-slate-400">No certificates issued yet.</p>
+        <% } else { %>
+          <div class="space-y-3">
+            <% certificates.forEach(cert => { %>
+              <div class="p-3.5 bg-slate-900/60 rounded-xl border border-slate-700/60 flex items-center justify-between">
+                <div>
+                  <div class="font-bold text-white text-xs"><%= cert.event_title %></div>
+                  <div class="text-[11px] text-slate-400"><%= cert.club_name %> | Role: <span class="text-indigo-300 font-semibold"><%= cert.role_type %></span></div>
+                </div>
+                <div class="flex items-center space-x-2">
+                  <a href="/verify/<%= cert.certificate_uuid %>" target="_blank" class="px-2 py-1 bg-slate-700 hover:bg-slate-600 text-slate-200 text-[11px] font-bold rounded-lg">
+                    Verify
+                  </a>
+                  <a href="/student/certificates/<%= cert.certificate_uuid %>/download" target="_blank" class="px-2 py-1 bg-indigo-600 hover:bg-indigo-500 text-white text-[11px] font-bold rounded-lg">
+                    PDF
+                  </a>
+                </div>
+              </div>
+            <% }) %>
+          </div>
+        <% } %>
+      </div>
+
+    </div>
+
+    <!-- Right Column: Badges Showcase Gallery -->
+    <div class="lg:col-span-6 space-y-6">
+
+      <div class="bg-slate-800/60 border border-slate-700/60 rounded-2xl p-6 shadow-xl space-y-4">
+        <h3 class="text-base font-bold text-white flex items-center space-x-2">
+          <span>🏆 Badges & Achievements Showcase</span>
+        </h3>
+
+        <% if (badgesEarned.length === 0) { %>
+          <div class="p-8 text-center text-slate-400 text-xs space-y-2">
+            <div class="text-2xl">🎖️</div>
+            <p>No badges earned yet. Participate in campus events to unlock milestone badges!</p>
+          </div>
+        <% } else { %>
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <% badgesEarned.forEach(badge => { %>
+              <div class="p-4 bg-slate-900/80 border border-slate-700/80 rounded-2xl shadow-lg space-y-2 hover:border-indigo-500/40 transition">
+                <div class="flex items-center space-x-3">
+                  <div class="w-10 h-10 rounded-xl bg-amber-500/20 text-amber-400 border border-amber-500/30 flex items-center justify-center font-bold text-lg">
+                    <% if (badge.icon_name === 'flame') { %>🔥
+                    <% } else if (badge.icon_name === 'heart') { %>❤️
+                    <% } else if (badge.icon_name === 'briefcase') { %>💼
+                    <% } else if (badge.icon_name === 'sparkles') { %>✨
+                    <% } else if (badge.icon_name === 'trophy') { %>🏆
+                    <% } else if (badge.icon_name === 'shield') { %>🛡️
+                    <% } else { %>⭐<% } %>
+                  </div>
+
+                  <div>
+                    <div class="font-bold text-white text-xs"><%= badge.badge_name %></div>
+                    <div class="text-[10px] font-mono text-indigo-400"><%= badge.club_name || 'System Milestone' %></div>
+                  </div>
+                </div>
+
+                <p class="text-[11px] text-slate-300 leading-snug"><%= badge.description %></p>
+
+                <% if (badge.reason) { %>
+                  <div class="text-[10px] text-slate-400 italic">"<%= badge.reason %>"</div>
+                <% } %>
+
+                <div class="text-[9px] font-mono text-slate-500 pt-1 border-t border-slate-800">
+                  Earned: <%= badge.awarded_at %>
+                </div>
+              </div>
+            <% }) %>
+          </div>
+        <% } %>
+      </div>
+
+    </div>
+
+  </div>
+
+</div>

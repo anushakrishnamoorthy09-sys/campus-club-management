@@ -1,0 +1,150 @@
+<div class="space-y-8 max-w-4xl mx-auto">
+
+  <!-- Header & Back Button -->
+  <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-6 border-b border-slate-800">
+    <div>
+      <a href="/student/events" class="text-xs text-indigo-400 hover:underline mb-2 inline-block">&larr; Back to Events List</a>
+      <div class="flex items-center space-x-3">
+        <h1 class="text-2xl sm:text-3xl font-bold text-white tracking-tight"><%= event.title %></h1>
+        <span class="px-2.5 py-1 rounded-lg text-xs font-bold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20"><%= event.status %></span>
+      </div>
+      <p class="text-sm text-slate-400 mt-1">Organized by <span class="text-slate-200 font-semibold"><%= event.club_name %></span></p>
+    </div>
+  </div>
+
+  <!-- Alerts -->
+  <% if (typeof success !== 'undefined' && success) { %>
+    <div class="p-4 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-sm flex items-center space-x-2 shadow-lg">
+      <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
+      <div>
+        <strong class="font-bold block">Registration Confirmed!</strong>
+        <span><%= success %></span>
+      </div>
+    </div>
+  <% } %>
+
+  <% if (typeof error !== 'undefined' && error) { %>
+    <div class="p-4 rounded-xl bg-rose-500/10 border border-rose-500/20 text-rose-400 text-sm flex items-start space-x-2 shadow-lg">
+      <svg class="w-5 h-5 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+      <div>
+        <strong class="font-bold block">Registration Error</strong>
+        <span><%= error %></span>
+        <% if (error.includes('profile')) { %>
+          <a href="/complete-profile" class="block text-xs font-bold underline mt-1 text-rose-300 hover:text-white">Click here to complete your student profile &rarr;</a>
+        <% } %>
+      </div>
+    </div>
+  <% } %>
+
+  <!-- Main Grid -->
+  <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+
+    <!-- Event Details & Academic Impact -->
+    <div class="lg:col-span-2 space-y-6">
+      <div class="bg-slate-800/60 border border-slate-700/60 rounded-2xl p-6 shadow-xl space-y-4">
+        <% if (event.banner_url) { %>
+          <div class="rounded-xl overflow-hidden max-h-64 border border-slate-700 mb-4">
+            <img src="<%= event.banner_url %>" alt="<%= event.title %> Banner" class="w-full h-full object-cover">
+          </div>
+        <% } %>
+
+        <h2 class="text-base font-bold text-white">Event Description</h2>
+        <p class="text-sm text-slate-300 whitespace-pre-line leading-relaxed"><%= event.description %></p>
+
+        <div class="grid grid-cols-2 sm:grid-cols-3 gap-4 pt-4 border-t border-slate-700/60 text-xs">
+          <div>
+            <span class="block text-slate-500 font-semibold uppercase">Scheduled Date</span>
+            <span class="font-bold text-slate-200 text-sm"><%= event.event_date %></span>
+          </div>
+          <div>
+            <span class="block text-slate-500 font-semibold uppercase">Time Slot</span>
+            <span class="font-bold text-slate-200 text-sm"><%= event.start_time %> - <%= event.end_time %></span>
+          </div>
+          <div>
+            <span class="block text-slate-500 font-semibold uppercase">Venue</span>
+            <span class="font-bold text-slate-200 text-sm"><%= event.venue %></span>
+          </div>
+        </div>
+      </div>
+
+      <!-- ACADEMIC TIMETABLE IMPACT PREVIEW FOR STUDENT (Requirement 2) -->
+      <div class="bg-slate-800/60 border border-slate-700/60 rounded-2xl p-6 shadow-xl space-y-3">
+        <h2 class="text-base font-bold text-white flex items-center space-x-2">
+          <svg class="w-5 h-5 text-indigo-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+          <span>Academic Timetable Effect</span>
+        </h2>
+
+        <div class="p-4 bg-indigo-950/40 border border-indigo-500/20 rounded-xl text-xs space-y-1">
+          <strong class="font-bold text-indigo-300 block mb-1">Overlapping Class Periods:</strong>
+          <% if (!periodImpact.active) { %>
+            <p class="text-slate-400"><%= periodImpact.reason === 'NON_WORKING_DAY' ? '✅ Scheduled on a non-working day (No class periods affected).' : 'ℹ️ No active timetable structure on this date.' %></p>
+          <% } else if (periodImpact.reason === 'ONLY_BREAKS') { %>
+            <p class="text-emerald-400">✅ Event takes place during break hours (No class periods affected).</p>
+          <% } else if (periodImpact.periods && periodImpact.periods.length > 0) { %>
+            <p class="text-slate-200">
+              ⚠️ Attending this event overlaps with <strong class="text-white"><%= periodImpact.periods.length %> class period(s)</strong>:
+              Periods <%= periodImpact.periods.map(p => `#${p.period_number} (${p.start_time}-${p.end_time})`).join(', ') %>
+            </p>
+          <% } else { %>
+            <p class="text-emerald-400">✅ No class period conflicts detected.</p>
+          <% } %>
+        </div>
+      </div>
+    </div>
+
+    <!-- Sidebar Registration Action -->
+    <div class="space-y-6">
+
+      <!-- Capacity & Status Box -->
+      <div class="bg-slate-800/60 border border-slate-700/60 rounded-2xl p-6 shadow-xl space-y-4">
+        <h3 class="text-base font-bold text-white flex items-center justify-between">
+          <span>Registration Seat Status</span>
+          <span class="text-xs font-mono text-indigo-400"><%= regStats %> / <%= event.capacity %></span>
+        </h3>
+
+        <!-- Progress Bar -->
+        <% const pct = Math.min(100, Math.round((regStats / event.capacity) * 100)); %>
+        <div class="w-full bg-slate-900 rounded-full h-3 overflow-hidden border border-slate-700">
+          <div class="bg-indigo-600 h-full rounded-full transition-all duration-500" style="width: <%= pct %>%;"></div>
+        </div>
+
+        <div class="text-xs text-slate-400 flex items-center justify-between">
+          <span>Available Seats: <strong class="text-white font-mono"><%= seatsRemaining %></strong></span>
+          <span><%= pct %>% Capacity Filled</span>
+        </div>
+
+        <!-- Registration Action Buttons & Messages -->
+        <div class="pt-2 border-t border-slate-700/60 space-y-3">
+          <% if (isRegistered) { %>
+            <div class="p-3 bg-emerald-500/10 border border-emerald-500/20 rounded-xl text-center">
+              <span class="text-emerald-400 font-bold text-xs flex items-center justify-center space-x-1">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
+                <span>You are Registered for this Event</span>
+              </span>
+              <a href="/student/my-registrations" class="block text-[11px] text-indigo-400 hover:underline mt-2">Manage Registration &rarr;</a>
+            </div>
+          <% } else if (isFull) { %>
+            <button disabled class="w-full py-3 bg-slate-800 text-slate-500 font-bold text-xs rounded-xl cursor-not-allowed border border-slate-700">
+              Registration Closed (Event Full)
+            </button>
+            <p class="text-[11px] text-rose-400 text-center">Event maximum capacity of <%= event.capacity %> has been reached.</p>
+          <% } else if (event.status !== 'APPROVED') { %>
+            <button disabled class="w-full py-3 bg-slate-800 text-slate-500 font-bold text-xs rounded-xl cursor-not-allowed border border-slate-700">
+              Registration Unavailable
+            </button>
+            <p class="text-[11px] text-slate-400 text-center">Event status is <%= event.status %>.</p>
+          <% } else { %>
+            <form action="/student/events/<%= event.id %>/register" method="POST">
+              <input type="hidden" name="_csrf" value="<%= typeof csrfToken !== 'undefined' ? csrfToken : '' %>">
+              <button type="submit" class="w-full py-3 bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-xs rounded-xl transition shadow-lg shadow-indigo-600/30">
+                Register for Event Now
+              </button>
+            </form>
+          <% } %>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+</div>

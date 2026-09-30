@@ -187,11 +187,15 @@ async function runTimetableTests() {
       recordTest('6. Defensive OD snapshot delete check', false, 'Failed to block timetable deletion when historical OD snapshots exist');
     }
 
-    // Clean up mock OD snapshot
-    db.prepare('DELETE FROM od_request_periods WHERE od_request_id = ?').run(odRes.lastInsertRowid);
-    db.prepare('DELETE FROM od_requests WHERE id = ?').run(odRes.lastInsertRowid);
-    db.prepare('DELETE FROM event_registrations WHERE id = ?').run(regRes.lastInsertRowid);
-    db.prepare('DELETE FROM events WHERE id = ?').run(evtRes.lastInsertRowid);
+    // Clean up mock OD snapshot (ignore error if trigger blocks deletion of immutable rows)
+    try {
+      db.prepare('DELETE FROM od_request_periods WHERE od_request_id = ?').run(odRes.lastInsertRowid);
+      db.prepare('DELETE FROM od_requests WHERE id = ?').run(odRes.lastInsertRowid);
+      db.prepare('DELETE FROM event_registrations WHERE id = ?').run(regRes.lastInsertRowid);
+      db.prepare('DELETE FROM events WHERE id = ?').run(evtRes.lastInsertRowid);
+    } catch (cleanupErr) {
+      // Expected: immutable triggers prevent deletion of OD snapshots
+    }
   } catch (err) {
     recordTest('6. Defensive OD snapshot delete check', false, err.message);
   }

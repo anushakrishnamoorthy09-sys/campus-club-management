@@ -1,0 +1,117 @@
+<div class="space-y-8">
+
+  <!-- Header -->
+  <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-6 border-b border-slate-800">
+    <div>
+      <h1 class="text-2xl sm:text-3xl font-bold text-white tracking-tight">My On-Duty (OD) Requests</h1>
+      <p class="text-sm text-slate-400 mt-1">Track your submitted OD applications, review class mentor decisions, and view period coverage</p>
+    </div>
+    <div>
+      <a href="/student/registrations" class="inline-flex items-center space-x-2 px-4 py-2.5 bg-indigo-600 hover:bg-indigo-500 text-white font-semibold text-xs rounded-xl transition shadow-md shadow-indigo-600/30">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path></svg>
+        <span>Apply from Registrations</span>
+      </a>
+    </div>
+  </div>
+
+  <!-- Alerts -->
+  <% if (typeof success !== 'undefined' && success) { %>
+    <div class="p-4 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-sm flex items-center space-x-2">
+      <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
+      <span><%= success %></span>
+    </div>
+  <% } %>
+
+  <% if (typeof error !== 'undefined' && error) { %>
+    <div class="p-4 rounded-xl bg-rose-500/10 border border-rose-500/20 text-rose-400 text-sm flex items-start space-x-2">
+      <svg class="w-5 h-5 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+      <div>
+        <strong class="font-bold block">Action Error</strong>
+        <span><%= error %></span>
+      </div>
+    </div>
+  <% } %>
+
+  <!-- OD List Cards -->
+  <div class="grid grid-cols-1 gap-6">
+    <% if (odRequests.length === 0) { %>
+      <div class="p-8 bg-slate-800/40 border border-slate-700/40 rounded-2xl text-center text-slate-400 text-sm">
+        You have not submitted any On-Duty (OD) applications yet.
+        <a href="/student/registrations" class="block text-indigo-400 font-bold hover:underline mt-2">View Registered Events & Apply &rarr;</a>
+      </div>
+    <% } %>
+
+    <% odRequests.forEach(od => { %>
+      <div class="bg-slate-800/60 border border-slate-700/60 rounded-2xl p-6 shadow-xl flex flex-col md:flex-row md:items-center justify-between gap-6">
+        
+        <div class="space-y-3 max-w-3xl">
+          <div class="flex flex-wrap items-center gap-2">
+            <!-- Status Badge -->
+            <% if (od.status === 'PENDING') { %>
+              <% if (od.escalated_at) { %>
+                <span class="px-2.5 py-1 rounded-lg text-xs font-bold bg-amber-500/20 text-amber-300 border border-amber-500/40 animate-pulse">ESCALATED TO ADMIN</span>
+              <% } else { %>
+                <span class="px-2.5 py-1 rounded-lg text-xs font-bold bg-amber-500/10 text-amber-400 border border-amber-500/20">PENDING MENTOR REVIEW</span>
+              <% } %>
+            <% } else if (od.status === 'APPROVED') { %>
+              <span class="px-2.5 py-1 rounded-lg text-xs font-bold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">APPROVED</span>
+            <% } else if (od.status === 'REJECTED') { %>
+              <span class="px-2.5 py-1 rounded-lg text-xs font-bold bg-rose-500/10 text-rose-400 border border-rose-500/20">REJECTED</span>
+            <% } else if (od.status === 'CLOSED') { %>
+              <span class="px-2.5 py-1 rounded-lg text-xs font-bold bg-slate-800 text-slate-400 border border-slate-700">CLOSED (EVENT CANCELLED)</span>
+            <% } %>
+
+            <span class="text-xs text-indigo-400 font-mono font-bold"><%= od.club_name %> (<%= od.club_code %>)</span>
+            <span class="text-xs text-slate-400">📅 <%= od.event_date %> (<%= od.start_time %> - <%= od.end_time %>)</span>
+            <span class="text-xs text-slate-400">📍 <%= od.event_venue %></span>
+          </div>
+
+          <h3 class="text-xl font-bold text-white tracking-tight">
+            <a href="/student/od/<%= od.id %>" class="hover:text-indigo-400 transition"><%= od.event_title %></a>
+          </h3>
+
+          <!-- Period Coverage -->
+          <div class="p-3 bg-slate-900/60 rounded-xl border border-slate-700/60 text-xs flex flex-wrap items-center justify-between gap-2">
+            <div class="text-slate-300 font-medium">
+              ⏰ <span class="font-bold text-white"><%= formatPeriodSummary(od.periods) %></span>
+            </div>
+            <div class="text-slate-400 font-mono">
+              Mentor: <span class="text-slate-200"><%= od.mentor_name %></span>
+            </div>
+          </div>
+
+          <!-- Remark & Reviewer Info -->
+          <% if (od.faculty_remark) { %>
+            <div class="p-3 rounded-xl <%= od.status === 'APPROVED' ? 'bg-emerald-500/10 text-emerald-300 border-emerald-500/20' : (od.status === 'REJECTED' ? 'bg-rose-500/10 text-rose-300 border-rose-500/20' : 'bg-slate-900/40 text-slate-300 border-slate-700') %> border text-xs">
+              <strong class="font-bold">Faculty Remark (<%= od.reviewer_name || od.mentor_name %>):</strong> "<%= od.faculty_remark %>"
+              <% if (od.reviewed_at) { %>
+                <span class="block text-[10px] text-slate-400 mt-1 font-mono">Decision date: <%= od.reviewed_at %></span>
+              <% } %>
+            </div>
+          <% } %>
+
+          <div class="text-[11px] text-slate-500 font-mono">
+            Submitted on: <%= od.created_at %>
+          </div>
+        </div>
+
+        <!-- Action Controls -->
+        <div class="flex flex-col sm:flex-row md:flex-col items-stretch md:items-end gap-2 min-w-[180px]">
+          
+          <a href="/student/od/<%= od.id %>" class="w-full px-4 py-2.5 bg-slate-700 hover:bg-slate-600 text-white font-bold text-xs rounded-xl transition text-center shadow">
+            View Details & Timeline
+          </a>
+
+          <% if (od.status === 'REJECTED') { %>
+            <a href="/student/od/apply?registrationId=<%= od.registration_id %>" class="w-full px-4 py-2.5 bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-xs rounded-xl transition text-center shadow shadow-indigo-600/30">
+              Re-apply for OD
+            </a>
+          <% } %>
+
+        </div>
+
+      </div>
+    <% }) %>
+  </div>
+
+</div>

@@ -1,0 +1,285 @@
+<div class="space-y-8">
+
+  <!-- Navigation & Header -->
+  <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-6 border-b border-slate-800">
+    <div>
+      <a href="/club/events" class="text-xs text-indigo-400 hover:underline mb-2 inline-block">&larr; Back to Events List</a>
+      <div class="flex items-center space-x-3">
+        <h1 class="text-2xl sm:text-3xl font-bold text-white tracking-tight"><%= event.title %></h1>
+        <!-- Status Pill -->
+        <% if (event.status === 'DRAFT') { %>
+          <span class="px-2.5 py-1 rounded-lg text-xs font-bold bg-slate-700 text-slate-300 border border-slate-600">DRAFT</span>
+        <% } else if (event.status === 'PENDING_APPROVAL') { %>
+          <span class="px-2.5 py-1 rounded-lg text-xs font-bold bg-amber-500/10 text-amber-400 border border-amber-500/20">PENDING APPROVAL</span>
+        <% } else if (event.status === 'APPROVED') { %>
+          <span class="px-2.5 py-1 rounded-lg text-xs font-bold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">APPROVED</span>
+        <% } else if (event.status === 'REJECTED') { %>
+          <span class="px-2.5 py-1 rounded-lg text-xs font-bold bg-rose-500/10 text-rose-400 border border-rose-500/20">REJECTED</span>
+        <% } else if (event.status === 'ONGOING') { %>
+          <span class="px-2.5 py-1 rounded-lg text-xs font-bold bg-indigo-500/20 text-indigo-300 border border-indigo-500/30 animate-pulse">ONGOING</span>
+        <% } else if (event.status === 'COMPLETED') { %>
+          <span class="px-2.5 py-1 rounded-lg text-xs font-bold bg-blue-500/10 text-blue-400 border border-blue-500/20">COMPLETED</span>
+        <% } else if (event.status === 'CANCELLED') { %>
+          <span class="px-2.5 py-1 rounded-lg text-xs font-bold bg-slate-800 text-slate-500 border border-slate-700">CANCELLED</span>
+        <% } %>
+      </div>
+      <p class="text-sm text-slate-400 mt-1">Organized by <span class="text-slate-200 font-semibold"><%= event.club_name %></span> (<%= event.club_code %>)</p>
+    </div>
+
+    <!-- Top Action Buttons -->
+    <div class="flex flex-wrap items-center gap-2">
+      <% if ((userPerms.isClubAdmin || userPerms.permissions.includes('EVENT_EDIT')) && ['DRAFT', 'REJECTED', 'APPROVED'].includes(event.status)) { %>
+        <a href="/club/events/<%= event.id %>/edit" class="px-4 py-2 bg-amber-600/20 hover:bg-amber-600/30 text-amber-300 border border-amber-500/30 font-semibold text-xs rounded-xl transition">
+          Edit Details
+        </a>
+      <% } %>
+
+      <% if (userPerms.isClubAdmin || userPerms.permissions.includes('VIEW_REGISTRATIONS')) { %>
+        <a href="/club/events/<%= event.id %>/registrations" class="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-indigo-400 font-semibold text-xs rounded-xl transition border border-slate-700">
+          Registrations Roster (<%= regCount %>)
+        </a>
+      <% } %>
+    </div>
+  </div>
+
+  <!-- Alerts -->
+  <% if (typeof success !== 'undefined' && success) { %>
+    <div class="p-4 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-sm flex items-center space-x-2">
+      <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
+      <span><%= success %></span>
+    </div>
+  <% } %>
+
+  <% if (typeof error !== 'undefined' && error) { %>
+    <div class="p-4 rounded-xl bg-rose-500/10 border border-rose-500/20 text-rose-400 text-sm flex items-center space-x-2">
+      <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+      <span><%= error %></span>
+    </div>
+  <% } %>
+
+  <!-- LOCKED WHILE PENDING BANNER -->
+  <% if (event.status === 'PENDING_APPROVAL') { %>
+    <div class="p-5 bg-amber-500/10 border border-amber-500/30 rounded-2xl flex items-start space-x-3 text-amber-300">
+      <svg class="w-6 h-6 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path></svg>
+      <div>
+        <h3 class="font-bold text-sm text-amber-200">Editing Disabled (Locked Event Proposal)</h3>
+        <p class="text-xs mt-1 text-amber-300/90">
+          This event is currently under review by the Faculty Coordinator / Institutional Admins. Direct modifications are locked while pending approval. You may withdraw the proposal if updates are needed prior to approval.
+        </p>
+      </div>
+    </div>
+  <% } %>
+
+  <!-- REJECTION REASON PROMINENT BANNER -->
+  <% if (event.status === 'REJECTED' && event.rejection_remark) { %>
+    <div class="p-5 bg-rose-500/10 border border-rose-500/30 rounded-2xl space-y-2 text-rose-300">
+      <div class="flex items-center space-x-2 font-bold text-sm text-rose-200">
+        <svg class="w-5 h-5 text-rose-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+        <span>Proposal Rejection Feedback</span>
+      </div>
+      <p class="text-xs text-rose-300 font-mono bg-rose-950/40 p-3 rounded-xl border border-rose-500/20"><%= event.rejection_remark %></p>
+      <p class="text-xs text-slate-400">Review the feedback, edit the event details, and resubmit for faculty approval.</p>
+    </div>
+  <% } %>
+
+  <!-- Event Overview Cards -->
+  <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+
+    <!-- Details Card -->
+    <div class="lg:col-span-2 bg-slate-800/60 border border-slate-700/60 rounded-2xl p-6 shadow-xl space-y-6">
+      <% if (event.banner_url) { %>
+        <div class="rounded-xl overflow-hidden max-h-64 border border-slate-700">
+          <img src="<%= event.banner_url %>" alt="<%= event.title %> Banner" class="w-full h-full object-cover">
+        </div>
+      <% } %>
+
+      <div>
+        <h2 class="text-base font-bold text-white mb-2">Description</h2>
+        <p class="text-sm text-slate-300 whitespace-pre-line leading-relaxed"><%= event.description %></p>
+      </div>
+
+      <div class="grid grid-cols-2 sm:grid-cols-3 gap-4 pt-4 border-t border-slate-700/60 text-xs">
+        <div>
+          <span class="block text-slate-500 font-semibold uppercase">Scheduled Date</span>
+          <span class="font-bold text-slate-200 text-sm"><%= event.event_date %></span>
+        </div>
+        <div>
+          <span class="block text-slate-500 font-semibold uppercase">Time Slot</span>
+          <span class="font-bold text-slate-200 text-sm"><%= event.start_time %> - <%= event.end_time %></span>
+        </div>
+        <div>
+          <span class="block text-slate-500 font-semibold uppercase">Venue</span>
+          <span class="font-bold text-slate-200 text-sm"><%= event.venue %></span>
+        </div>
+      </div>
+
+      <!-- Read-Only Timetable Impact Notice -->
+      <div class="p-4 bg-indigo-950/40 border border-indigo-500/20 rounded-xl text-xs space-y-1">
+        <span class="font-bold text-indigo-300 uppercase tracking-wider block mb-1">Academic Timetable Impact</span>
+        <% if (!impact.active) { %>
+          <p class="text-slate-400"><%= impact.reason === 'NON_WORKING_DAY' ? '✅ Scheduled on a non-working day (No class periods affected).' : 'ℹ️ No active timetable structure on this date.' %></p>
+        <% } else if (impact.reason === 'ONLY_BREAKS') { %>
+          <p class="text-emerald-400">✅ Event takes place during break hours (No class periods affected).</p>
+        <% } else if (impact.periods && impact.periods.length > 0) { %>
+          <p class="text-slate-200">
+            ⚠️ Overlaps with <strong class="text-white"><%= impact.periods.length %> class period(s)</strong>:
+            Periods <%= impact.periods.map(p => `#${p.period_number} (${p.start_time}-${p.end_time})`).join(', ') %>
+          </p>
+        <% } else { %>
+          <p class="text-emerald-400">✅ No class period conflicts detected.</p>
+        <% } %>
+      </div>
+    </div>
+
+    <!-- Sidebar: Capacity, Legal Action Controls -->
+    <div class="space-y-6">
+
+      <!-- Registration Progress -->
+      <div class="bg-slate-800/60 border border-slate-700/60 rounded-2xl p-6 shadow-xl space-y-4">
+        <h2 class="text-base font-bold text-white flex items-center justify-between">
+          <span>Capacity & Roster</span>
+          <span class="text-xs font-mono text-indigo-400"><%= regCount %> / <%= event.capacity %></span>
+        </h2>
+
+        <!-- Progress bar -->
+        <% const pct = Math.min(100, Math.round((regCount / event.capacity) * 100)); %>
+        <div class="w-full bg-slate-900 rounded-full h-3 overflow-hidden border border-slate-700">
+          <div class="bg-indigo-600 h-full rounded-full transition-all duration-500" style="width: <%= pct %>%;"></div>
+        </div>
+        <p class="text-xs text-slate-400 text-right"><%= pct %>% Filled</p>
+      </div>
+
+      <!-- State-Appropriate Transition Controls -->
+      <div class="bg-slate-800/60 border border-slate-700/60 rounded-2xl p-6 shadow-xl space-y-4">
+        <h2 class="text-base font-bold text-white">Event State Actions</h2>
+        <p class="text-xs text-slate-400">Perform state transitions based on your granted permissions and the current lifecycle state.</p>
+
+        <div class="space-y-3 pt-2">
+          <!-- Submit Action -->
+          <% if ((userPerms.isClubAdmin || userPerms.permissions.includes('EVENT_SUBMIT')) && event.status === 'DRAFT') { %>
+            <form action="/club/events/<%= event.id %>/transition" method="POST">
+              <input type="hidden" name="_csrf" value="<%= typeof csrfToken !== 'undefined' ? csrfToken : '' %>">
+              <input type="hidden" name="action" value="submit">
+              <button type="submit" class="w-full py-2.5 bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-xs rounded-xl transition shadow-md shadow-indigo-600/30">
+                Submit Proposal for Approval
+              </button>
+            </form>
+          <% } %>
+
+          <!-- Resubmit Action -->
+          <% if ((userPerms.isClubAdmin || userPerms.permissions.includes('EVENT_SUBMIT')) && event.status === 'REJECTED') { %>
+            <form action="/club/events/<%= event.id %>/transition" method="POST">
+              <input type="hidden" name="_csrf" value="<%= typeof csrfToken !== 'undefined' ? csrfToken : '' %>">
+              <input type="hidden" name="action" value="submit">
+              <button type="submit" class="w-full py-2.5 bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-xs rounded-xl transition shadow-md shadow-indigo-600/30">
+                Resubmit for Approval
+              </button>
+            </form>
+          <% } %>
+
+          <!-- Withdraw Action -->
+          <% if ((userPerms.isClubAdmin || userPerms.permissions.includes('EVENT_SUBMIT')) && ['DRAFT', 'PENDING_APPROVAL'].includes(event.status)) { %>
+            <details class="w-full">
+              <summary class="w-full cursor-pointer py-2.5 bg-slate-700 hover:bg-slate-600 text-slate-200 font-bold text-xs rounded-xl text-center border border-slate-600 transition">
+                Withdraw Event Proposal...
+              </summary>
+              <form action="/club/events/<%= event.id %>/transition" method="POST" class="mt-3 p-3 bg-slate-900 rounded-xl border border-slate-700 space-y-3">
+                <input type="hidden" name="_csrf" value="<%= typeof csrfToken !== 'undefined' ? csrfToken : '' %>">
+                <input type="hidden" name="action" value="withdraw">
+                <div>
+                  <label class="block text-[11px] font-semibold text-slate-400 mb-1">Reason for Withdrawal *</label>
+                  <input type="text" name="reason" required placeholder="Provide reason..." class="w-full px-3 py-1.5 bg-slate-800 border border-slate-700 rounded-lg text-white text-xs">
+                </div>
+                <button type="submit" class="w-full py-2 bg-rose-600 hover:bg-rose-500 text-white font-bold text-xs rounded-lg transition">
+                  Confirm Withdrawal
+                </button>
+              </form>
+            </details>
+          <% } %>
+
+          <!-- Start Action (Club Admin Only) -->
+          <% if (userPerms.isClubAdmin && event.status === 'APPROVED') { %>
+            <form action="/club/events/<%= event.id %>/transition" method="POST">
+              <input type="hidden" name="_csrf" value="<%= typeof csrfToken !== 'undefined' ? csrfToken : '' %>">
+              <input type="hidden" name="action" value="start">
+              <button type="submit" class="w-full py-2.5 bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs rounded-xl transition shadow-md shadow-emerald-600/30">
+                Start Event (Mark ONGOING)
+              </button>
+            </form>
+          <% } %>
+
+          <!-- Complete Action (Club Admin Only) -->
+          <% if (userPerms.isClubAdmin && event.status === 'ONGOING') { %>
+            <form action="/club/events/<%= event.id %>/transition" method="POST">
+              <input type="hidden" name="_csrf" value="<%= typeof csrfToken !== 'undefined' ? csrfToken : '' %>">
+              <input type="hidden" name="action" value="complete">
+              <button type="submit" class="w-full py-2.5 bg-blue-600 hover:bg-blue-500 text-white font-bold text-xs rounded-xl transition shadow-md shadow-blue-600/30">
+                Complete Event
+              </button>
+            </form>
+          <% } %>
+
+          <!-- Cancel Action (Club Admin Only) -->
+          <% if (userPerms.isClubAdmin && ['APPROVED', 'ONGOING'].includes(event.status)) { %>
+            <details class="w-full">
+              <summary class="w-full cursor-pointer py-2.5 bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 font-bold text-xs rounded-xl text-center border border-rose-500/30 transition">
+                Cancel Event...
+              </summary>
+              <form action="/club/events/<%= event.id %>/transition" method="POST" class="mt-3 p-3 bg-slate-900 rounded-xl border border-slate-700 space-y-3">
+                <input type="hidden" name="_csrf" value="<%= typeof csrfToken !== 'undefined' ? csrfToken : '' %>">
+                <input type="hidden" name="action" value="cancel">
+                <div>
+                  <label class="block text-[11px] font-semibold text-slate-400 mb-1">Reason for Cancellation *</label>
+                  <input type="text" name="reason" required placeholder="Provide cancellation reason..." class="w-full px-3 py-1.5 bg-slate-800 border border-slate-700 rounded-lg text-white text-xs">
+                </div>
+                <button type="submit" class="w-full py-2 bg-rose-600 hover:bg-rose-500 text-white font-bold text-xs rounded-lg transition">
+                  Confirm Cancellation
+                </button>
+              </form>
+            </details>
+          <% } %>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- Status Audit Log Timeline -->
+  <div class="bg-slate-800/60 border border-slate-700/60 rounded-2xl p-6 shadow-xl space-y-4">
+    <h2 class="text-lg font-bold text-white flex items-center space-x-2">
+      <svg class="w-5 h-5 text-indigo-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+      <span>Event Status Lifecycle Timeline</span>
+    </h2>
+
+    <div class="relative border-l-2 border-slate-700 ml-4 space-y-6 pt-2 pl-6">
+      <% if (auditLogs.length === 0) { %>
+        <p class="text-xs text-slate-500 italic">No recorded lifecycle log entries.</p>
+      <% } %>
+
+      <% auditLogs.forEach(log => { %>
+        <% let parsedDetails = {}; try { parsedDetails = JSON.parse(log.details_json || '{}'); } catch(e){} %>
+        <div class="relative group">
+          <!-- Dot -->
+          <div class="absolute -left-[31px] top-1.5 w-3 h-3 rounded-full bg-indigo-500 border-2 border-slate-900"></div>
+
+          <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-1">
+            <span class="text-xs font-mono font-bold text-indigo-400"><%= log.action %></span>
+            <span class="text-[11px] text-slate-500"><%= log.timestamp %></span>
+          </div>
+
+          <p class="text-xs text-slate-300 mt-1">
+            Actor: <strong class="text-white"><%= log.actor_name || 'System' %></strong>
+            <% if (log.actor_role) { %><span class="text-slate-400 font-mono text-[10px]">(<%= log.actor_role %>)</span><% } %>
+          </p>
+
+          <% if (parsedDetails.remark || parsedDetails.reason) { %>
+            <p class="text-xs text-amber-300/90 font-mono bg-slate-900/80 p-2.5 rounded-lg border border-slate-700/80 mt-1.5">
+              Remark/Reason: <%= parsedDetails.remark || parsedDetails.reason %>
+            </p>
+          <% } %>
+        </div>
+      <% }) %>
+    </div>
+  </div>
+
+</div>

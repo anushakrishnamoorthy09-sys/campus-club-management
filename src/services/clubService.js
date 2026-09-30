@@ -335,10 +335,21 @@ function deleteClub(actorUser, clubIdInput) {
   }
 
   const clubId = parseInt(clubIdInput, 10);
-  const club = db.prepare('SELECT id, name FROM clubs WHERE id = ?').get(clubId);
+  const club = db.prepare('SELECT id, name, club_admin_id FROM clubs WHERE id = ?').get(clubId);
   if (!club) {
     const error = new Error('Club not found');
     error.statusCode = 404;
+    throw error;
+  }
+
+  // Check if club has active members
+  const memberCount = db.prepare(
+    'SELECT COUNT(*) as count FROM club_memberships WHERE club_id = ? AND user_id != ?'
+  ).get(clubId, club.club_admin_id || 0);
+
+  if (memberCount && memberCount.count > 0) {
+    const error = new Error(`Action Denied: Cannot delete club '${club.name}' because it has active members`);
+    error.statusCode = 400;
     throw error;
   }
 

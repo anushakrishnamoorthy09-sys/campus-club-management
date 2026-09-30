@@ -1,0 +1,66 @@
+<div class="space-y-8">
+
+  <!-- Header -->
+  <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-6 border-b border-slate-800">
+    <div>
+      <h1 class="text-2xl sm:text-3xl font-bold text-white tracking-tight">Assigned Mentee Roster</h1>
+      <p class="text-sm text-slate-400 mt-1">Monitor mentee participation, track On-Duty performance, and inspect student achievement portfolios</p>
+    </div>
+    <span class="px-3 py-1.5 bg-indigo-500/10 border border-indigo-500/20 text-indigo-400 font-mono text-xs font-bold rounded-xl self-start sm:self-auto">
+      CLASS MENTOR SCOPE
+    </span>
+  </div>
+
+  <!-- Mentee Roster Table -->
+  <div class="bg-slate-800/60 border border-slate-700/60 rounded-2xl p-6 shadow-xl space-y-4">
+    <div class="flex items-center justify-between">
+      <h2 class="text-lg font-bold text-white tracking-tight">Mentee Students (<%= mentees.length %>)</h2>
+    </div>
+
+    <% if (mentees.length === 0) { %>
+      <div class="p-8 text-center text-slate-400 text-sm bg-slate-900/40 rounded-xl border border-slate-700/40">
+        You do not have any assigned mentees in your class roster currently.
+      </div>
+    <% } else { %>
+      <div class="overflow-x-auto rounded-xl border border-slate-700/60">
+        <table class="w-full text-left text-xs text-slate-300">
+          <thead class="bg-slate-900/80 text-slate-400 uppercase font-mono font-bold border-b border-slate-700/60">
+            <tr>
+              <th class="py-3.5 px-4">Student Name</th>
+              <th class="py-3.5 px-4">RA Number</th>
+              <th class="py-3.5 px-4">Dept / Year / Sec</th>
+              <th class="py-3.5 px-4">Registrations</th>
+              <th class="py-3.5 px-4">Events Attended</th>
+              <th class="py-3.5 px-4">OD Applications</th>
+              <th class="py-3.5 px-4">OD Approval Rate</th>
+              <th class="py-3.5 px-4 text-right">Action</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-slate-700/40">
+            <% mentees.forEach(m => { %>
+              <tr class="hover:bg-slate-700/20 transition">
+                <td class="py-3.5 px-4 font-bold text-white">
+                  <a href="/faculty/mentees/<%= m.user_id %>" class="hover:text-indigo-400 transition"><%= m.full_name %></a>
+                </td>
+                <td class="py-3.5 px-4 font-mono font-bold text-indigo-400"><%= m.ra_number %></td>
+                <td class="py-3.5 px-4 text-slate-300"><%= m.department %> | Yr <%= m.year_of_study %>-Sec <%= m.section %></td>
+                <td class="py-3.5 px-4 font-mono font-bold text-slate-200"><%= m.registration_count %></td>
+                <td class="py-3.5 px-4 font-mono font-bold text-emerald-400"><%= m.attended_count %></td>
+                <td class="py-3.5 px-4 font-mono text-slate-300">
+                  <%= m.total_ods %> Total (<span class="text-amber-400"><%= m.pending_ods %> P</span>, <span class="text-emerald-400"><%= m.approved_ods %> A</span>, <span class="text-rose-400"><%= m.rejected_ods %> R</span>)
+                </td>
+                <td class="py-3.5 px-4 font-mono font-bold text-indigo-300"><%= m.approval_rate %>%</td>
+                <td class="py-3.5 px-4 text-right">
+                  <a href="/faculty/mentees/<%= m.user_id %>" class="px-3 py-1.5 bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-xs rounded-lg transition inline-block">
+                    Drill-Down &rarr;
+                  </a>
+                </td>
+              </tr>
+            <% }) %>
+          </tbody>
+        </table>
+      </div>
+    <% } %>
+  </div>
+
+</div>

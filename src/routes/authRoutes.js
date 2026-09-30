@@ -24,10 +24,12 @@ router.get('/login', attachCsrfToken, (req, res) => {
   if (req.user) {
     return res.redirect('/');
   }
+  const returnTo = (req.query.returnTo || '').toString();
   res.render('login', {
     title: 'Login - CampusClubOS',
     error: req.query.error || null,
     email: '',
+    returnTo: (returnTo.startsWith('/') && !returnTo.startsWith('//') && !returnTo.startsWith('/\\')) ? returnTo : '',
     isGoogleConfigured
   });
 });
@@ -36,7 +38,7 @@ router.get('/login', attachCsrfToken, (req, res) => {
  * POST /login
  */
 router.post('/login', loginLimiter, doubleCsrfProtection, (req, res) => {
-  const { email, password } = req.body;
+  const { email, password, returnTo } = req.body;
   const ipAddress = req.ip || req.socket.remoteAddress;
 
   try {
@@ -44,17 +46,24 @@ router.post('/login', loginLimiter, doubleCsrfProtection, (req, res) => {
     const token = signToken(user.id);
     setAuthCookie(res, token);
 
-    if (req.accepts('html')) {
-      return res.redirect('/');
+    let redirectTarget = '/';
+    if (returnTo && typeof returnTo === 'string' && returnTo.startsWith('/') && !returnTo.startsWith('//') && !returnTo.startsWith('/\\')) {
+      redirectTarget = returnTo;
     }
-    return res.json({ message: 'Login successful', user });
+
+    if (req.accepts('html')) {
+      return res.redirect(redirectTarget);
+    }
+    return res.json({ message: 'Login successful', user, redirectTarget });
   } catch (err) {
     const statusCode = err.statusCode || 401;
+    const returnToVal = (returnTo && typeof returnTo === 'string' && returnTo.startsWith('/') && !returnTo.startsWith('//') && !returnTo.startsWith('/\\')) ? returnTo : '';
     if (req.accepts('html')) {
       return res.status(statusCode).render('login', {
         title: 'Login - CampusClubOS',
         error: err.message,
         email: email || '',
+        returnTo: returnToVal,
         isGoogleConfigured
       });
     }

@@ -13,20 +13,29 @@ const adminRoutes = require('./routes/adminRoutes');
 const clubRoutes = require('./routes/clubRoutes');
 const timetableRoutes = require('./routes/timetableRoutes');
 const dashboardRoutes = require('./routes/dashboardRoutes');
+const eventRoutes = require('./routes/eventRoutes');
+const facultyApprovalRoutes = require('./routes/facultyApprovalRoutes');
+const adminEventRoutes = require('./routes/adminEventRoutes');
+const studentRoutes = require('./routes/studentRoutes');
+const notificationRoutes = require('./routes/notificationRoutes');
+const certificateRoutes = require('./routes/certificateRoutes');
+const badgeRoutes = require('./routes/badgeRoutes');
+const analyticsRoutes = require('./routes/analyticsRoutes');
 
 const app = express();
 
 // Passport Initialization (session: false)
 app.use(passport.initialize());
 
-// 1. Security Headers (Helmet) with CSP configured for EJS & Tailwind CDN
+// 1. Security Headers (Helmet) with CSP configured for EJS, Tailwind CDN & Chart.js CDN
 app.use(
   helmet({
     contentSecurityPolicy: {
       directives: {
         defaultSrc: ["'self'"],
-        scriptSrc: ["'self'", "'unsafe-inline'", "https://cdn.tailwindcss.com"],
-        styleSrc: ["'self'", "'unsafe-inline'", "https://cdn.tailwindcss.com"],
+        scriptSrc: ["'self'", "'unsafe-inline'", "https://cdn.tailwindcss.com", "https://cdn.jsdelivr.net"],
+        styleSrc: ["'self'", "'unsafe-inline'", "https://cdn.tailwindcss.com", "https://fonts.googleapis.com"],
+        fontSrc: ["'self'", "https://fonts.gstatic.com"],
         imgSrc: ["'self'", "data:", "https:"],
         connectSrc: ["'self'"]
       }
@@ -68,6 +77,14 @@ app.use('/', adminRoutes);
 app.use('/', clubRoutes);
 app.use('/', timetableRoutes);
 app.use('/', dashboardRoutes);
+app.use('/', eventRoutes);
+app.use('/', facultyApprovalRoutes);
+app.use('/', adminEventRoutes);
+app.use('/', studentRoutes);
+app.use('/', notificationRoutes);
+app.use('/', certificateRoutes);
+app.use('/', badgeRoutes);
+app.use('/', analyticsRoutes);
 
 // 8. Base & Health Routes
 app.get('/', (req, res) => {

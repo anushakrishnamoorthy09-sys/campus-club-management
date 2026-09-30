@@ -22,6 +22,7 @@ erDiagram
     
     CLUBS ||--o{ EVENTS : "organizes"
     USERS ||--o{ EVENTS : "creates (created_by)"
+    USERS ||--o{ EVENTS : "escalates (escalated_by)"
     EVENTS ||--o{ EVENT_REGISTRATIONS : "has_registrations"
     STUDENTS ||--o{ EVENT_REGISTRATIONS : "registers (student_user_id)"
     
@@ -51,3 +52,10 @@ erDiagram
     USERS ||--o{ MESSAGES : "sends"
     USERS ||--o{ AUDIT_LOGS : "acts (actor_id)"
 ```
+
+## Entity Details: CERTIFICATES & Revocation
+- `status`: `ISSUED`, `REVOKED`
+- `role_type`: `PARTICIPANT`, `WINNER`, `RUNNER_UP`, `VOLUNTEER`, `ORGANIZER`
+- `revocation_reason`, `revoked_by`, `revoked_at`: Populated when certificate is revoked by Club Admin or Super Admin.
+
+

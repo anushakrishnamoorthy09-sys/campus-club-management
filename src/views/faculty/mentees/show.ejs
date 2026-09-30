@@ -1,0 +1,177 @@
+<div class="max-w-5xl mx-auto space-y-6">
+
+  <!-- Header Navigation -->
+  <div class="flex items-center justify-between pb-4 border-b border-slate-800">
+    <div>
+      <div class="text-xs font-bold uppercase tracking-wider text-indigo-400 mb-1">Mentee Drill-Down Portfolio</div>
+      <h1 class="text-2xl sm:text-3xl font-bold text-white tracking-tight"><%= mentee.full_name %></h1>
+      <p class="text-slate-400 text-xs sm:text-sm mt-1">RA Number: <%= mentee.ra_number %> | <%= mentee.department %>, Year <%= mentee.year_of_study %> - Sec <%= mentee.section %></p>
+    </div>
+    <a href="/faculty/mentees" class="px-3.5 py-2 bg-slate-800 hover:bg-slate-700 text-slate-300 font-semibold text-xs rounded-xl border border-slate-700 transition">
+      &larr; Back to Mentee Roster
+    </a>
+  </div>
+
+  <!-- Summary Cards Grid -->
+  <div class="grid grid-cols-2 sm:grid-cols-4 gap-4">
+    <div class="p-4 bg-slate-800/60 border border-slate-700/60 rounded-2xl">
+      <div class="text-slate-400 text-xs font-bold uppercase tracking-wider font-mono">Registrations</div>
+      <div class="text-2xl font-extrabold text-white mt-1"><%= registrations.length %></div>
+    </div>
+    <div class="p-4 bg-emerald-500/10 border border-emerald-500/20 rounded-2xl">
+      <div class="text-emerald-400 text-xs font-bold uppercase tracking-wider font-mono">Events Attended</div>
+      <div class="text-2xl font-extrabold text-white mt-1"><%= attendanceRecords.filter(a => a.status === 'PRESENT').length %></div>
+    </div>
+    <div class="p-4 bg-amber-500/10 border border-amber-500/20 rounded-2xl">
+      <div class="text-amber-400 text-xs font-bold uppercase tracking-wider font-mono">OD Applications</div>
+      <div class="text-2xl font-extrabold text-white mt-1"><%= odRequests.length %></div>
+    </div>
+    <div class="p-4 bg-indigo-500/10 border border-indigo-500/20 rounded-2xl">
+      <div class="text-indigo-400 text-xs font-bold uppercase tracking-wider font-mono">OD Approval Rate</div>
+      <div class="text-2xl font-extrabold text-white mt-1"><%= approvalRate %>%</div>
+    </div>
+  </div>
+
+  <!-- Section 1: Event Registrations -->
+  <div class="bg-slate-800/60 border border-slate-700/60 rounded-2xl p-6 space-y-4 shadow-xl">
+    <h2 class="text-lg font-bold text-white tracking-tight flex items-center space-x-2">
+      <svg class="w-5 h-5 text-indigo-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
+      <span>1. Event Registrations & Attendance</span>
+    </h2>
+
+    <% if (registrations.length === 0) { %>
+      <div class="p-4 bg-slate-900/40 rounded-xl border border-slate-700/40 text-slate-400 text-xs">No event registrations found for this mentee.</div>
+    <% } else { %>
+      <div class="overflow-x-auto rounded-xl border border-slate-700/60">
+        <table class="w-full text-left text-xs text-slate-300">
+          <thead class="bg-slate-900/80 text-slate-400 uppercase font-mono font-bold border-b border-slate-700/60">
+            <tr>
+              <th class="py-3 px-4">Event Title</th>
+              <th class="py-3 px-4">Club</th>
+              <th class="py-3 px-4">Date & Time</th>
+              <th class="py-3 px-4">Venue</th>
+              <th class="py-3 px-4">Event Status</th>
+              <th class="py-3 px-4">Attendance</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-slate-700/40">
+            <% registrations.forEach(r => { %>
+              <tr class="hover:bg-slate-700/20 transition">
+                <td class="py-3 px-4 font-bold text-white"><%= r.event_title %></td>
+                <td class="py-3 px-4 font-mono text-indigo-400"><%= r.club_name %></td>
+                <td class="py-3 px-4 font-mono text-slate-300"><%= r.event_date %> (<%= formatTime12h(r.start_time) %> - <%= formatTime12h(r.end_time) %>)</td>
+                <td class="py-3 px-4"><%= r.venue %></td>
+                <td class="py-3 px-4 font-bold"><%= r.event_status %></td>
+                <td class="py-3 px-4 font-bold">
+                  <span class="<%= r.attendance_status === 'PRESENT' ? 'text-emerald-400' : (r.attendance_status === 'ABSENT' ? 'text-rose-400' : 'text-slate-500') %>">
+                    <%= r.attendance_status || 'Unmarked' %>
+                  </span>
+                  <% if (r.od_status === 'APPROVED' && r.attendance_status === 'ABSENT') { %>
+                    <div class="mt-1"><span class="px-2 py-0.5 rounded text-[10px] font-bold bg-rose-500/20 text-rose-300 border border-rose-500/40 animate-pulse">⚠️ OD APPROVED BUT ABSENT</span></div>
+                  <% } %>
+                </td>
+              </tr>
+            <% }) %>
+          </tbody>
+        </table>
+      </div>
+    <% } %>
+  </div>
+
+  <!-- Section 2: On-Duty Applications -->
+  <div class="bg-slate-800/60 border border-slate-700/60 rounded-2xl p-6 space-y-4 shadow-xl">
+    <h2 class="text-lg font-bold text-white tracking-tight flex items-center space-x-2">
+      <svg class="w-5 h-5 text-indigo-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+      <span>2. On-Duty Applications</span>
+    </h2>
+
+    <% if (odRequests.length === 0) { %>
+      <div class="p-4 bg-slate-900/40 rounded-xl border border-slate-700/40 text-slate-400 text-xs">No OD applications submitted.</div>
+    <% } else { %>
+      <div class="overflow-x-auto rounded-xl border border-slate-700/60">
+        <table class="w-full text-left text-xs text-slate-300">
+          <thead class="bg-slate-900/80 text-slate-400 uppercase font-mono font-bold border-b border-slate-700/60">
+            <tr>
+              <th class="py-3 px-4">OD ID</th>
+              <th class="py-3 px-4">Event Title</th>
+              <th class="py-3 px-4">Periods Covered</th>
+              <th class="py-3 px-4">Status</th>
+              <th class="py-3 px-4">Remark</th>
+              <th class="py-3 px-4 text-right">Action</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-slate-700/40">
+            <% odRequests.forEach(od => { %>
+              <tr class="hover:bg-slate-700/20 transition">
+                <td class="py-3 px-4 font-mono font-bold text-indigo-400">#<%= od.id %></td>
+                <td class="py-3 px-4 font-semibold text-white"><%= od.event_title %></td>
+                <td class="py-3 px-4 font-mono text-slate-300"><%= formatPeriodSummary(od.periods) %></td>
+                <td class="py-3 px-4 font-bold">
+                  <span class="<%= od.status === 'APPROVED' ? 'text-emerald-400' : (od.status === 'REJECTED' ? 'text-rose-400' : 'text-amber-400') %>"><%= od.status %></span>
+                </td>
+                <td class="py-3 px-4 italic text-slate-400"><%= od.faculty_remark || '-' %></td>
+                <td class="py-3 px-4 text-right">
+                  <a href="/faculty/od/<%= od.id %>" class="px-2.5 py-1 bg-slate-700 hover:bg-slate-600 text-white font-bold text-[11px] rounded-lg transition inline-block">
+                    View
+                  </a>
+                </td>
+              </tr>
+            <% }) %>
+          </tbody>
+        </table>
+      </div>
+    <% } %>
+  </div>
+
+  <!-- Section 3 & 4: Certificates & Badges Grid -->
+  <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+    <!-- Certificates -->
+    <div class="bg-slate-800/60 border border-slate-700/60 rounded-2xl p-6 space-y-4 shadow-xl">
+      <h3 class="text-base font-bold text-white tracking-tight flex items-center space-x-2">
+        <svg class="w-5 h-5 text-indigo-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"></path></svg>
+        <span>3. Issued Certificates (<%= certificates.length %>)</span>
+      </h3>
+
+      <% if (certificates.length === 0) { %>
+        <p class="text-xs text-slate-400">No verifiable certificates issued yet.</p>
+      <% } else { %>
+        <div class="space-y-2">
+          <% certificates.forEach(c => { %>
+            <div class="p-3 bg-slate-900/60 rounded-xl border border-slate-700/60 text-xs flex justify-between items-center">
+              <div>
+                <div class="font-bold text-white"><%= c.event_title %></div>
+                <div class="text-[10px] text-slate-400 font-mono">Issued: <%= c.issued_at %></div>
+              </div>
+              <span class="px-2 py-0.5 rounded text-[10px] font-bold bg-indigo-500/10 text-indigo-400 border border-indigo-500/20"><%= c.role_type %></span>
+            </div>
+          <% }) %>
+        </div>
+      <% } %>
+    </div>
+
+    <!-- Badges -->
+    <div class="bg-slate-800/60 border border-slate-700/60 rounded-2xl p-6 space-y-4 shadow-xl">
+      <h3 class="text-base font-bold text-white tracking-tight flex items-center space-x-2">
+        <svg class="w-5 h-5 text-indigo-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z"></path></svg>
+        <span>4. Earned Badges (<%= badges.length %>)</span>
+      </h3>
+
+      <% if (badges.length === 0) { %>
+        <p class="text-xs text-slate-400">No achievement badges awarded yet.</p>
+      <% } else { %>
+        <div class="space-y-2">
+          <% badges.forEach(b => { %>
+            <div class="p-3 bg-slate-900/60 rounded-xl border border-slate-700/60 text-xs flex justify-between items-center">
+              <div>
+                <div class="font-bold text-white"><%= b.badge_name %></div>
+                <div class="text-[10px] text-slate-400"><%= b.description %></div>
+              </div>
+              <span class="px-2 py-0.5 rounded text-[10px] font-bold bg-amber-500/10 text-amber-400 border border-amber-500/20">Awarded</span>
+            </div>
+          <% }) %>
+        </div>
+      <% } %>
+    </div>
+  </div>
+
+</div>

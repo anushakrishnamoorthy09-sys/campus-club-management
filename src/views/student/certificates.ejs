@@ -1,0 +1,95 @@
+<div class="space-y-8">
+
+  <!-- Header -->
+  <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-6 border-b border-slate-800">
+    <div>
+      <div class="text-xs font-bold uppercase tracking-wider text-indigo-400 mb-1">Student Portal</div>
+      <h1 class="text-2xl sm:text-3xl font-bold text-white tracking-tight">My Verifiable Certificates</h1>
+      <p class="text-sm text-slate-400 mt-1">Official event participation certificates and institutional credentials</p>
+    </div>
+    <div>
+      <a href="/student/portfolio.pdf" class="px-4 py-2.5 bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-xs rounded-xl shadow-lg shadow-indigo-600/30 transition flex items-center space-x-2">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
+        <span>Export Activity Portfolio (PDF)</span>
+      </a>
+    </div>
+  </div>
+
+  <!-- Alerts -->
+  <% if (typeof success !== 'undefined' && success) { %>
+    <div class="p-4 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-sm flex items-center space-x-2">
+      <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
+      <span><%= success %></span>
+    </div>
+  <% } %>
+
+  <!-- Certificates Grid / Roster -->
+  <% if (certificates.length === 0) { %>
+    <div class="bg-slate-800/60 border border-slate-700/60 rounded-2xl p-12 text-center text-slate-400 space-y-3">
+      <div class="inline-flex items-center justify-center w-12 h-12 rounded-2xl bg-slate-700/50 text-slate-500 text-2xl mx-auto">
+        📜
+      </div>
+      <h3 class="text-base font-bold text-white">No Certificates Issued Yet</h3>
+      <p class="text-xs text-slate-400 max-w-sm mx-auto">Attend campus club events and mark your attendance to receive official verifiable participation certificates.</p>
+    </div>
+  <% } else { %>
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+      <% certificates.forEach(cert => { %>
+        <div class="bg-slate-800/70 border border-slate-700/70 rounded-2xl p-6 shadow-xl space-y-4 relative flex flex-col justify-between hover:border-indigo-500/40 transition">
+          
+          <div>
+            <div class="flex items-center justify-between gap-2 mb-3">
+              <span class="px-2.5 py-0.5 rounded-md text-[10px] font-bold font-mono uppercase bg-indigo-500/20 text-indigo-300 border border-indigo-500/30">
+                <%= cert.role_type %>
+              </span>
+
+              <% if (cert.status === 'ISSUED') { %>
+                <span class="px-2.5 py-0.5 rounded-md text-[10px] font-bold font-mono bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 flex items-center space-x-1">
+                  <span class="w-1.5 h-1.5 rounded-full bg-emerald-400"></span>
+                  <span>VALID</span>
+                </span>
+              <% } else { %>
+                <span class="px-2.5 py-0.5 rounded-md text-[10px] font-bold font-mono bg-rose-500/20 text-rose-400 border border-rose-500/30 flex items-center space-x-1">
+                  <span class="w-1.5 h-1.5 rounded-full bg-rose-400"></span>
+                  <span>REVOKED</span>
+                </span>
+              <% } %>
+            </div>
+
+            <h2 class="text-lg font-bold text-white tracking-tight"><%= cert.event_title %></h2>
+            <p class="text-xs text-slate-400 mt-1">
+              Organized by <span class="text-indigo-300 font-semibold"><%= cert.club_name %></span> | Date: <%= cert.event_date %>
+            </p>
+
+            <% if (cert.status === 'REVOKED') { %>
+              <div class="mt-3 p-3 bg-rose-500/10 border border-rose-500/20 rounded-xl text-rose-300 text-xs">
+                <strong class="font-bold block">Revocation Notice:</strong>
+                <span><%= cert.revocation_reason %></span>
+              </div>
+            <% } %>
+          </div>
+
+          <div class="pt-4 border-t border-slate-700/60 space-y-3">
+            <div class="text-[11px] font-mono text-slate-400 truncate">
+              ID: <span class="text-slate-200"><%= cert.certificate_uuid %></span>
+            </div>
+
+            <div class="flex items-center justify-between gap-3">
+              <a href="/verify/<%= cert.certificate_uuid %>" target="_blank" class="text-xs text-indigo-400 hover:text-indigo-300 font-semibold flex items-center space-x-1">
+                <span>Verify Online</span>
+                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"></path></svg>
+              </a>
+
+              <a href="/student/certificates/<%= cert.certificate_uuid %>/download" target="_blank" class="px-3.5 py-1.5 bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-xs rounded-xl shadow-md shadow-indigo-600/30 transition flex items-center space-x-1.5">
+                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>
+                <span>Download PDF</span>
+              </a>
+            </div>
+          </div>
+
+        </div>
+      <% }) %>
+    </div>
+  <% } %>
+
+</div>

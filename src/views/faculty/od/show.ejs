@@ -1,0 +1,144 @@
+<div class="max-w-4xl mx-auto space-y-6">
+
+  <!-- Header -->
+  <div class="flex items-center justify-between pb-4 border-b border-slate-800">
+    <div>
+      <div class="text-xs font-bold uppercase tracking-wider text-indigo-400 mb-1">Mentee On-Duty Application Review</div>
+      <h1 class="text-2xl sm:text-3xl font-bold text-white tracking-tight">Review OD Request #<%= od.id %></h1>
+      <p class="text-slate-400 text-xs sm:text-sm mt-1">Student: <%= od.student_name %> (<%= od.ra_number %>)</p>
+    </div>
+    <div class="flex items-center space-x-2">
+      <!-- Contextual Discuss Button Placeholder (Requirement 6) -->
+      <!-- TODO: Open thread in messaging phase -->
+      <button disabled title="Contextual discussion thread coming in messaging phase" class="px-3.5 py-2 bg-slate-800 text-slate-500 font-semibold text-xs rounded-xl border border-slate-700 cursor-not-allowed flex items-center space-x-1.5">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 4.418 9 8z"></path></svg>
+        <span>Discuss (Coming Soon)</span>
+      </button>
+
+      <a href="/faculty/od" class="px-3.5 py-2 bg-slate-800 hover:bg-slate-700 text-slate-300 font-semibold text-xs rounded-xl border border-slate-700 transition">
+        &larr; Back to Queue
+      </a>
+    </div>
+  </div>
+
+  <!-- Alerts -->
+  <% if (typeof error !== 'undefined' && error) { %>
+    <div class="p-4 rounded-xl bg-rose-500/10 border border-rose-500/20 text-rose-400 text-sm flex items-start space-x-2">
+      <svg class="w-5 h-5 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+      <div>
+        <strong class="font-bold block">Review Action Failed</strong>
+        <span><%= error %></span>
+      </div>
+    </div>
+  <% } %>
+
+  <!-- Main Card -->
+  <div class="bg-slate-800/60 border border-slate-700/60 rounded-2xl p-6 sm:p-8 space-y-8 shadow-xl">
+    
+    <!-- Student & Event Profile Grid -->
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-6 pb-6 border-b border-slate-700/60 text-xs">
+      <div class="space-y-3">
+        <div class="text-slate-400 font-bold uppercase font-mono tracking-wider">Student Profile</div>
+        <div class="text-lg font-bold text-white"><%= od.student_name %></div>
+        <div class="text-slate-300 font-mono">RA Number: <strong class="text-white"><%= od.ra_number %></strong></div>
+        <div class="text-slate-300">Department: <strong class="text-white"><%= od.department %></strong></div>
+        <div class="text-slate-300">Class Section: <strong class="text-white"><%= od.year_of_study %> Year - Sec <%= od.section %></strong></div>
+      </div>
+
+      <div class="space-y-3 md:text-right">
+        <div class="text-slate-400 font-bold uppercase font-mono tracking-wider">Event Details</div>
+        <div class="text-lg font-bold text-white"><%= od.event_title %></div>
+        <div class="text-indigo-400 font-semibold"><%= od.club_name %> (<%= od.club_code %>)</div>
+        <div class="text-slate-300">📍 Venue: <%= od.event_venue %></div>
+        <div class="text-slate-300 font-mono">📅 <%= od.event_date %> (<%= formatTime12h(od.start_time) %> - <%= formatTime12h(od.end_time) %>)</div>
+        <div class="text-slate-300">Attendance: <strong class="<%= od.attendance_status === 'PRESENT' ? 'text-emerald-400' : (od.attendance_status === 'ABSENT' ? 'text-rose-400' : 'text-slate-400') %>"><%= od.attendance_status || 'Unmarked' %></strong></div>
+        <% if (od.status === 'APPROVED' && od.attendance_status === 'ABSENT') { %>
+          <div class="mt-2 p-3 bg-rose-500/10 border border-rose-500/30 rounded-xl text-rose-300 text-xs font-bold flex items-center space-x-2">
+            <span>⚠️ <strong>ATTENDANCE ALERT:</strong> Student has an APPROVED OD for this event, but is marked ABSENT in attendance records.</span>
+          </div>
+        <% } %>
+      </div>
+    </div>
+
+    <!-- Affected Period Breakdown Table -->
+    <div class="space-y-4">
+      <div class="flex items-center justify-between flex-wrap gap-2">
+        <h3 class="text-base font-bold text-white tracking-tight flex items-center space-x-2">
+          <svg class="w-5 h-5 text-indigo-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+          <span>Requested Class Period Coverage</span>
+        </h3>
+        <span class="px-3 py-1 bg-indigo-500/10 border border-indigo-500/20 text-indigo-400 font-mono text-xs font-bold rounded-lg">
+          Summary: <%= formatPeriodSummary(od.periods) %>
+        </span>
+      </div>
+
+      <div class="overflow-x-auto rounded-xl border border-slate-700/60">
+        <table class="w-full text-left text-xs text-slate-300">
+          <thead class="bg-slate-900/80 text-slate-400 uppercase font-mono font-bold border-b border-slate-700/60">
+            <tr>
+              <th class="py-3 px-4">Period #</th>
+              <th class="py-3 px-4">Period Label</th>
+              <th class="py-3 px-4">Timing</th>
+              <th class="py-3 px-4">Type</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-slate-700/40">
+            <% (od.periods || []).forEach(p => { %>
+              <tr class="hover:bg-slate-700/20 transition">
+                <td class="py-3 px-4 font-mono font-bold text-indigo-400">#<%= p.period_number %></td>
+                <td class="py-3 px-4 font-semibold text-white"><%= p.period_label || p.label || ('Period ' + p.period_number) %></td>
+                <td class="py-3 px-4 font-mono text-slate-300"><%= formatTime12h(p.start_time) %> - <%= formatTime12h(p.end_time) %></td>
+                <td class="py-3 px-4">
+                  <span class="px-2 py-0.5 rounded text-[10px] font-bold uppercase bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">CLASS</span>
+                </td>
+              </tr>
+            <% }) %>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Mentor Decision Actions Form (Requirement 2) -->
+    <% if (od.status === 'PENDING') { %>
+      <div class="p-6 bg-slate-900/80 border border-slate-700/80 rounded-2xl space-y-6">
+        <h3 class="text-base font-bold text-white tracking-tight">Record Mentor Decision</h3>
+
+        <form action="/faculty/od/<%= od.id %>/action" method="POST" class="space-y-4">
+          <input type="hidden" name="_csrf" value="<%= typeof csrfToken !== 'undefined' ? csrfToken : '' %>">
+
+          <div>
+            <label class="block text-xs font-bold text-slate-300 uppercase font-mono mb-2">Faculty Remark / Decision Reason</label>
+            <textarea name="remark" rows="3" placeholder="Enter decision remark (mandatory when rejecting or escalating)..." class="w-full px-4 py-3 bg-slate-800 border border-slate-700 rounded-xl text-white text-xs focus:ring-2 focus:ring-indigo-500 focus:outline-none"></textarea>
+            <p class="text-[11px] text-slate-400 mt-1">Approval remark is optional. Rejection remark and escalation reason are mandatory.</p>
+          </div>
+
+          <div class="flex flex-col sm:flex-row items-center gap-3 pt-2">
+            <button type="submit" name="action" value="approve" class="w-full sm:w-auto px-6 py-2.5 bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs rounded-xl transition shadow-lg shadow-emerald-600/30 flex items-center justify-center space-x-1.5">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
+              <span>Approve OD</span>
+            </button>
+
+            <button type="submit" name="action" value="reject" class="w-full sm:w-auto px-6 py-2.5 bg-rose-600 hover:bg-rose-500 text-white font-bold text-xs rounded-xl transition shadow-lg shadow-rose-600/30 flex items-center justify-center space-x-1.5">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+              <span>Reject OD</span>
+            </button>
+
+            <button type="submit" name="action" value="escalate" class="w-full sm:w-auto px-6 py-2.5 bg-amber-600 hover:bg-amber-500 text-white font-bold text-xs rounded-xl transition shadow-lg shadow-amber-600/30 flex items-center justify-center space-x-1.5">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 10l7-7m0 0l7 7m-7-7v18"></path></svg>
+              <span>Escalate to Admin</span>
+            </button>
+          </div>
+        </form>
+      </div>
+    <% } else { %>
+      <!-- Decision Recorded Banner -->
+      <div class="p-4 bg-slate-900/60 rounded-xl border border-slate-700/60 space-y-1 text-xs">
+        <div class="font-bold text-white">Decision Recorded: <span class="<%= od.status === 'APPROVED' ? 'text-emerald-400' : 'text-rose-400' %>"><%= od.status %></span></div>
+        <div class="text-slate-300">Reviewed by: <%= od.reviewer_name %> on <%= od.reviewed_at %></div>
+        <div class="text-slate-400">Remark: "<%= od.faculty_remark || 'None' %>"</div>
+      </div>
+    <% } %>
+
+  </div>
+
+</div>

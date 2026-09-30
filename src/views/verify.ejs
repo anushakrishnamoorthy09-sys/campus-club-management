@@ -1,0 +1,155 @@
+<div class="max-w-2xl mx-auto py-8 sm:py-12 space-y-8">
+
+  <!-- Header -->
+  <div class="text-center space-y-3">
+    <div class="inline-flex items-center justify-center w-12 h-12 rounded-2xl bg-indigo-600/20 text-indigo-400 border border-indigo-500/30 text-2xl mx-auto">
+      📜
+    </div>
+    <h1 class="text-2xl sm:text-3xl font-bold text-white tracking-tight">Public Certificate Verification</h1>
+    <p class="text-xs sm:text-sm text-slate-400 max-w-md mx-auto">
+      Verify the authenticity and institutional validity of certificates issued by CampusClubOS student clubs.
+    </p>
+  </div>
+
+  <!-- Search Form -->
+  <div class="bg-slate-800/60 border border-slate-700/60 rounded-2xl p-6 shadow-xl">
+    <form action="/verify" method="GET" class="flex flex-col sm:flex-row items-stretch gap-3">
+      <div class="relative flex-1">
+        <input 
+          type="text" 
+          name="uuid" 
+          value="<%= typeof queryUuid !== 'undefined' ? queryUuid : '' %>" 
+          placeholder="Enter Certificate UUID (e.g., 550e8400-e29b-41d4-a716-446655440000)..." 
+          required 
+          class="w-full pl-10 pr-4 py-3 bg-slate-900 border border-slate-700 rounded-xl text-white text-xs placeholder-slate-500 font-mono focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500"
+        >
+        <svg class="w-4 h-4 text-slate-500 absolute left-3.5 top-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
+      </div>
+
+      <button type="submit" class="px-6 py-3 bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-xs rounded-xl shadow-lg shadow-indigo-600/30 transition flex items-center justify-center space-x-2">
+        <span>Verify Record</span>
+      </button>
+    </form>
+  </div>
+
+  <!-- Result Section -->
+  <% if (typeof searched !== 'undefined' && searched) { %>
+    
+    <% if (cert) { %>
+      <% if (cert.status === 'ISSUED') { %>
+        
+        <!-- VALID CERTIFICATE CARD -->
+        <div class="bg-emerald-950/30 border-2 border-emerald-500/50 rounded-2xl p-6 sm:p-8 shadow-2xl space-y-6 relative overflow-hidden">
+          <div class="flex items-center justify-between border-b border-emerald-500/20 pb-4">
+            <div class="flex items-center space-x-3">
+              <div class="w-10 h-10 rounded-xl bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 flex items-center justify-center">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"></path></svg>
+              </div>
+              <div>
+                <h2 class="text-lg font-extrabold text-emerald-400 uppercase tracking-wider">OFFICIALLY VERIFIED</h2>
+                <p class="text-xs text-emerald-300/80">Valid Institutional Credential</p>
+              </div>
+            </div>
+            <span class="px-3 py-1 bg-emerald-500/20 text-emerald-300 font-mono text-xs font-bold rounded-lg border border-emerald-500/30">
+              STATUS: VALID
+            </span>
+          </div>
+
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs font-mono">
+            <div class="bg-slate-900/60 p-3.5 rounded-xl border border-slate-700/60">
+              <div class="text-slate-400 font-sans uppercase text-[10px] tracking-wider mb-1">Recipient Student</div>
+              <div class="text-white font-bold text-sm"><%= cert.studentName %></div>
+              <div class="text-indigo-400 mt-0.5">RA: <%= cert.maskedRaNumber %></div>
+              <div class="text-slate-400 text-[11px] mt-0.5"><%= cert.department %></div>
+            </div>
+
+            <div class="bg-slate-900/60 p-3.5 rounded-xl border border-slate-700/60">
+              <div class="text-slate-400 font-sans uppercase text-[10px] tracking-wider mb-1">Participation Role</div>
+              <div class="text-emerald-400 font-bold text-sm"><%= cert.roleType %></div>
+              <div class="text-slate-400 mt-0.5">Issued: <%= cert.issuedAt %></div>
+              <div class="text-slate-400 text-[11px] mt-0.5">By: <%= cert.issuerName %></div>
+            </div>
+          </div>
+
+          <div class="bg-slate-900/60 p-4 rounded-xl border border-slate-700/60 space-y-2 text-xs">
+            <div class="text-slate-400 font-sans uppercase text-[10px] tracking-wider">Event & Organizing Body</div>
+            <div class="text-base font-bold text-white"><%= cert.eventTitle %></div>
+            <div class="text-slate-300 font-mono">
+              Organized by <strong class="text-indigo-300"><%= cert.clubName %> (<%= cert.clubCode %>)</strong> | Date: <%= cert.eventDate %> | Venue: <%= cert.venue %>
+            </div>
+          </div>
+
+          <div class="text-[11px] font-mono text-slate-400 text-center pt-2">
+            UUID: <span class="text-slate-300 font-bold"><%= cert.certificateUuid %></span>
+          </div>
+        </div>
+
+      <% else %>
+
+        <!-- REVOKED CERTIFICATE CARD -->
+        <div class="bg-rose-950/30 border-2 border-rose-500/50 rounded-2xl p-6 sm:p-8 shadow-2xl space-y-6">
+          <div class="flex items-center justify-between border-b border-rose-500/20 pb-4">
+            <div class="flex items-center space-x-3">
+              <div class="w-10 h-10 rounded-xl bg-rose-500/20 text-rose-400 border border-rose-500/30 flex items-center justify-center">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M6 18L18 6M6 6l12 12"></path></svg>
+              </div>
+              <div>
+                <h2 class="text-lg font-extrabold text-rose-400 uppercase tracking-wider">CERTIFICATE REVOKED</h2>
+                <p class="text-xs text-rose-300/80">This credential has been invalidated by administration</p>
+              </div>
+            </div>
+            <span class="px-3 py-1 bg-rose-500/20 text-rose-300 font-mono text-xs font-bold rounded-lg border border-rose-500/30">
+              STATUS: REVOKED
+            </span>
+          </div>
+
+          <div class="bg-slate-900/80 p-4 rounded-xl border border-rose-500/30 space-y-2 text-xs">
+            <div class="text-rose-400 font-bold uppercase text-[10px]">Revocation Details</div>
+            <div class="text-slate-200"><strong>Reason:</strong> <%= cert.revocationReason || 'Administrative revocation' %></div>
+            <div class="text-slate-400 font-mono text-[11px]">Revoked At: <%= cert.revokedAt %></div>
+          </div>
+
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs font-mono opacity-80">
+            <div class="bg-slate-900/60 p-3.5 rounded-xl border border-slate-700/60">
+              <div class="text-slate-400 font-sans uppercase text-[10px]">Recipient</div>
+              <div class="text-white font-bold"><%= cert.studentName %></div>
+              <div class="text-slate-400">RA: <%= cert.maskedRaNumber %></div>
+            </div>
+
+            <div class="bg-slate-900/60 p-3.5 rounded-xl border border-slate-700/60">
+              <div class="text-slate-400 font-sans uppercase text-[10px]">Event</div>
+              <div class="text-white font-bold"><%= cert.eventTitle %></div>
+              <div class="text-slate-400"><%= cert.clubName %></div>
+            </div>
+          </div>
+
+          <div class="text-[11px] font-mono text-slate-400 text-center">
+            UUID: <span class="text-slate-300 font-bold"><%= cert.certificateUuid %></span>
+          </div>
+        </div>
+
+      <% } %>
+
+    <% } else { %>
+
+      <!-- NOT FOUND CARD -->
+      <div class="bg-slate-800/80 border border-slate-700/80 rounded-2xl p-8 text-center shadow-xl space-y-4">
+        <div class="inline-flex items-center justify-center w-12 h-12 rounded-2xl bg-amber-500/10 text-amber-400 border border-amber-500/20 text-2xl mx-auto">
+          ❓
+        </div>
+        <div>
+          <h3 class="text-lg font-bold text-white">Certificate Record Not Found</h3>
+          <p class="text-xs text-slate-400 mt-1 max-w-sm mx-auto">
+            No institutional certificate matching UUID <strong class="font-mono text-amber-300"><%= queryUuid %></strong> was found in the system registry.
+          </p>
+        </div>
+        <div class="text-[11px] text-slate-500 font-mono pt-2">
+          Please check the certificate UUID string and try again.
+        </div>
+      </div>
+
+    <% } %>
+
+  <% } %>
+
+</div>

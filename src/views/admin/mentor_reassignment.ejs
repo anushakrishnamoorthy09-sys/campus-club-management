@@ -1,0 +1,120 @@
+<div class="max-w-4xl mx-auto space-y-6">
+
+  <!-- Header -->
+  <div class="flex items-center justify-between pb-4 border-b border-slate-800">
+    <div>
+      <div class="text-xs font-bold uppercase tracking-wider text-indigo-400 mb-1">Administrative Personnel Management</div>
+      <h1 class="text-2xl sm:text-3xl font-bold text-white tracking-tight">Class Mentor Reassignment</h1>
+      <p class="text-slate-400 text-xs sm:text-sm mt-1">Reassign a student's class mentor and automatically transfer open pending OD applications</p>
+    </div>
+    <a href="/admin/od" class="px-3.5 py-2 bg-slate-800 hover:bg-slate-700 text-slate-300 font-semibold text-xs rounded-xl border border-slate-700 transition">
+      &larr; Back to Admin OD Queue
+    </a>
+  </div>
+
+  <!-- Alerts -->
+  <% if (typeof success !== 'undefined' && success) { %>
+    <div class="p-4 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-sm flex items-center space-x-2">
+      <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
+      <span><%= success %></span>
+    </div>
+  <% } %>
+
+  <% if (typeof error !== 'undefined' && error) { %>
+    <div class="p-4 rounded-xl bg-rose-500/10 border border-rose-500/20 text-rose-400 text-sm flex items-start space-x-2">
+      <svg class="w-5 h-5 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+      <div>
+        <strong class="font-bold block">Reassignment Error</strong>
+        <span><%= error %></span>
+      </div>
+    </div>
+  <% } %>
+
+  <!-- Search Student Form -->
+  <div class="bg-slate-800/60 border border-slate-700/60 rounded-2xl p-6 space-y-4 shadow-xl">
+    <h2 class="text-base font-bold text-white tracking-tight">Step 1: Search Student Profile by RA Number</h2>
+
+    <form action="/admin/mentor-reassignment" method="GET" class="flex flex-col sm:flex-row items-center gap-3">
+      <div class="flex-1 w-full">
+        <input type="text" name="searchRa" value="<%= searchRa %>" required placeholder="Enter student 15-digit RA Number (e.g. RA2311003010001)..." class="w-full px-4 py-2.5 bg-slate-900 border border-slate-700 rounded-xl text-white text-xs uppercase font-mono focus:ring-2 focus:ring-indigo-500 focus:outline-none">
+      </div>
+      <button type="submit" class="w-full sm:w-auto px-6 py-2.5 bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-xs rounded-xl transition shadow-lg shadow-indigo-600/30 flex-shrink-0">
+        Lookup Student &rarr;
+      </button>
+    </form>
+  </div>
+
+  <% if (selectedStudent) { %>
+    <!-- Step 2: Confirmation & Selection Card -->
+    <div class="bg-slate-800/60 border border-slate-700/60 rounded-2xl p-6 sm:p-8 space-y-6 shadow-xl">
+      <h2 class="text-base font-bold text-white tracking-tight">Step 2: Confirm Mentor Transfer & Affected Pending ODs</h2>
+
+      <!-- Student & Current Mentor Summary -->
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-6 p-4 bg-slate-900/60 rounded-xl border border-slate-700/60 text-xs">
+        <div>
+          <div class="text-slate-400 font-bold uppercase font-mono mb-1">Target Student Profile</div>
+          <div class="text-base font-bold text-white"><%= selectedStudent.student_name %></div>
+          <div class="text-indigo-400 font-mono font-bold">RA: <%= selectedStudent.ra_number %></div>
+          <div class="text-slate-300"><%= selectedStudent.department %> | Yr <%= selectedStudent.year_of_study %>-Sec <%= selectedStudent.section %></div>
+        </div>
+
+        <div class="md:text-right">
+          <div class="text-slate-400 font-bold uppercase font-mono mb-1">Current Class Mentor</div>
+          <div class="text-base font-bold text-amber-300"><%= selectedStudent.mentor_name || 'Unassigned' %></div>
+          <div class="text-slate-400">Department: <%= selectedStudent.mentor_department || 'N/A' %></div>
+        </div>
+      </div>
+
+      <!-- Impact Analysis: Pending ODs that will move -->
+      <div class="space-y-3">
+        <h3 class="text-xs font-bold text-slate-300 uppercase font-mono tracking-wider flex items-center justify-between">
+          <span>Pending OD Requests Transfer Impact</span>
+          <span class="text-indigo-400 font-bold"><%= pendingOdsToMove.length %> Pending OD<%= pendingOdsToMove.length === 1 ? '' : 's' %> Will Move</span>
+        </h3>
+
+        <% if (pendingOdsToMove.length === 0) { %>
+          <div class="p-3.5 bg-slate-900/40 rounded-xl border border-slate-700/40 text-xs text-slate-400">
+            No pending OD applications currently exist for this student. Reassignment will update the mentor for future applications.
+          </div>
+        <% } else { %>
+          <div class="p-3.5 bg-amber-500/10 border border-amber-500/20 rounded-xl text-xs text-amber-300 space-y-2">
+            <div class="font-bold">⚠️ Automatic Queue Transfer Notice:</div>
+            <p>Reassigning this mentor will move the following <strong><%= pendingOdsToMove.length %> PENDING</strong> OD request(s) to the new mentor's review queue in the same transaction. Decided ODs (`APPROVED` or `REJECTED`) will retain their original reviewer forever.</p>
+
+            <ul class="list-disc list-inside space-y-1 font-mono text-[11px] pt-1 text-slate-200">
+              <% pendingOdsToMove.forEach(od => { %>
+                <li>OD #<%= od.id %>: <%= od.event_title %> (<%= od.event_date %>) - Status: PENDING</li>
+              <% }) %>
+            </ul>
+          </div>
+        <% } %>
+      </div>
+
+      <!-- Reassignment Form -->
+      <form action="/admin/mentor-reassignment" method="POST" class="pt-4 border-t border-slate-700/60 space-y-4">
+        <input type="hidden" name="_csrf" value="<%= typeof csrfToken !== 'undefined' ? csrfToken : '' %>">
+        <input type="hidden" name="studentUserId" value="<%= selectedStudent.user_id %>">
+
+        <div>
+          <label class="block text-xs font-bold text-slate-300 uppercase font-mono mb-2">Select New Class Mentor</label>
+          <select name="newMentorId" required class="w-full px-4 py-2.5 bg-slate-900 border border-slate-700 rounded-xl text-white text-xs focus:ring-2 focus:ring-indigo-500 focus:outline-none">
+            <option value="">-- Choose New Faculty Mentor --</option>
+            <% facultyMentors.forEach(f => { %>
+              <% if (Number(f.user_id) !== Number(selectedStudent.class_mentor_id)) { %>
+                <option value="<%= f.user_id %>"><%= f.full_name %> (<%= f.department %> - <%= f.designation %>)</option>
+              <% } %>
+            <% }) %>
+          </select>
+        </div>
+
+        <div class="pt-2 flex justify-end">
+          <button type="submit" onclick="return confirm('Confirm reassigning class mentor for student <%= selectedStudent.student_name %>?');" class="px-6 py-2.5 bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs rounded-xl transition shadow-lg shadow-emerald-600/30 flex items-center space-x-1.5">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
+            <span>Execute Mentor Reassignment</span>
+          </button>
+        </div>
+      </form>
+    </div>
+  <% } %>
+
+</div>

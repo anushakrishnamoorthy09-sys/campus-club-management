@@ -1,0 +1,226 @@
+<div class="max-w-4xl mx-auto space-y-6">
+
+  <!-- Header Navigation -->
+  <div class="flex items-center justify-between pb-4 border-b border-slate-800">
+    <div>
+      <div class="text-xs font-bold uppercase tracking-wider text-indigo-400 mb-1">On-Duty Application Detail</div>
+      <h1 class="text-2xl sm:text-3xl font-bold text-white tracking-tight">OD Request #<%= od.id %></h1>
+      <p class="text-slate-400 text-xs sm:text-sm mt-1">Submitted for <%= od.event_title %> (<%= od.club_name %>)</p>
+    </div>
+    <a href="/student/od" class="px-3.5 py-2 bg-slate-800 hover:bg-slate-700 text-slate-300 font-semibold text-xs rounded-xl border border-slate-700 transition">
+      &larr; Back to My OD List
+    </a>
+  </div>
+
+  <!-- Main Card -->
+  <div class="bg-slate-800/60 border border-slate-700/60 rounded-2xl p-6 sm:p-8 space-y-8 shadow-xl">
+    
+    <!-- Status Header Banner -->
+    <div class="p-5 rounded-2xl border flex flex-col sm:flex-row sm:items-center justify-between gap-4 <%= od.status === 'APPROVED' ? 'bg-emerald-500/10 border-emerald-500/30' : (od.status === 'REJECTED' ? 'bg-rose-500/10 border-rose-500/30' : (od.status === 'CLOSED' ? 'bg-slate-800 border-slate-700' : 'bg-amber-500/10 border-amber-500/30')) %>">
+      <div>
+        <div class="text-xs font-mono font-bold uppercase tracking-wider text-slate-400">Application Status</div>
+        <div class="text-xl font-extrabold text-white flex items-center space-x-2 mt-1">
+          <% if (od.status === 'APPROVED') { %>
+            <span class="text-emerald-400">APPROVED ON-DUTY</span>
+          <% } else if (od.status === 'REJECTED') { %>
+            <span class="text-rose-400">REJECTED</span>
+          <% } else if (od.status === 'CLOSED') { %>
+            <span class="text-slate-400">CLOSED (EVENT CANCELLED)</span>
+          <% } else if (od.escalated_at) { %>
+            <span class="text-amber-300">ESCALATED TO ADMINISTRATION</span>
+          <% } else { %>
+            <span class="text-amber-400">PENDING CLASS MENTOR REVIEW</span>
+          <% } %>
+        </div>
+      </div>
+
+      <% if (od.status === 'REJECTED') { %>
+        <a href="/student/od/apply?registrationId=<%= od.registration_id %>" class="px-4 py-2.5 bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-xs rounded-xl transition shadow shadow-indigo-600/30 text-center">
+          Re-apply for OD
+        </a>
+      <% } %>
+    </div>
+
+    <!-- Event & Registration Overview -->
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-6 pb-6 border-b border-slate-700/60 text-xs">
+      <div class="space-y-2">
+        <div class="text-slate-400 font-bold uppercase font-mono tracking-wider">Event & Venue</div>
+        <div class="text-base font-bold text-white"><%= od.event_title %></div>
+        <div class="text-indigo-400 font-semibold"><%= od.club_name %> (<%= od.club_code %>)</div>
+        <div class="text-slate-300">📍 Venue: <%= od.event_venue %></div>
+      </div>
+      <div class="space-y-2 md:text-right">
+        <div class="text-slate-400 font-bold uppercase font-mono tracking-wider">Event Schedule</div>
+        <div class="text-base font-bold text-white font-mono">📅 <%= od.event_date %></div>
+        <div class="text-slate-300">⏰ <%= formatTime12h(od.start_time) %> - <%= formatTime12h(od.end_time) %></div>
+      </div>
+    </div>
+
+    <!-- Period Breakdown & Immutable Snapshot Notice -->
+    <div class="space-y-4">
+      <div class="flex items-center justify-between flex-wrap gap-2">
+        <h3 class="text-base font-bold text-white tracking-tight flex items-center space-x-2">
+          <svg class="w-5 h-5 text-indigo-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"></path></svg>
+          <span>Affected Academic Class Periods</span>
+        </h3>
+
+        <% if (od.periods && od.periods.length > 0 && od.periods[0].timetable_name) { %>
+          <span class="px-3 py-1 bg-slate-900 border border-slate-700 text-slate-300 font-mono text-xs rounded-lg">
+            Structure: "<%= od.periods[0].timetable_name %>"
+          </span>
+        <% } %>
+      </div>
+
+      <% if (od.status === 'APPROVED') { %>
+        <div class="p-3.5 bg-emerald-500/10 border border-emerald-500/20 rounded-xl text-xs text-emerald-300 flex items-start space-x-2">
+          <svg class="w-4 h-4 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path></svg>
+          <div>
+            <strong class="font-bold">Frozen Immutable Period Snapshot:</strong> These periods were permanently frozen at decision time under timetable <em>"<%= od.periods[0] ? od.periods[0].timetable_name : 'Active Timetable' %>"</em>.
+            <% if (timetableChanged) { %>
+              <span class="block text-amber-300 font-semibold mt-1">⚠️ Note: The institution's active timetable for this date has since changed, but your approved OD snapshot remains frozen and unchanged.</span>
+            <% } %>
+          </div>
+        </div>
+      <% } %>
+
+      <!-- Table of Periods -->
+      <div class="overflow-x-auto rounded-xl border border-slate-700/60">
+        <table class="w-full text-left text-xs text-slate-300">
+          <thead class="bg-slate-900/80 text-slate-400 uppercase font-mono font-bold border-b border-slate-700/60">
+            <tr>
+              <th class="py-3 px-4">Period #</th>
+              <th class="py-3 px-4">Period Label</th>
+              <th class="py-3 px-4">Class Time</th>
+              <th class="py-3 px-4">Status</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-slate-700/40">
+            <% (od.periods || []).forEach(p => { %>
+              <tr class="hover:bg-slate-700/20 transition">
+                <td class="py-3 px-4 font-mono font-bold text-indigo-400">#<%= p.period_number %></td>
+                <td class="py-3 px-4 font-semibold text-white"><%= p.period_label || p.label || ('Period ' + p.period_number) %></td>
+                <td class="py-3 px-4 font-mono text-slate-300"><%= formatTime12h(p.start_time) %> - <%= formatTime12h(p.end_time) %></td>
+                <td class="py-3 px-4">
+                  <span class="px-2 py-0.5 rounded text-[10px] font-bold uppercase bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">COVERED BY OD</span>
+                </td>
+              </tr>
+            <% }) %>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Status Timeline Step-by-Step UI -->
+    <div class="space-y-4 pt-4 border-t border-slate-700/60">
+      <h3 class="text-base font-bold text-white tracking-tight flex items-center space-x-2">
+        <svg class="w-5 h-5 text-indigo-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path></svg>
+        <span>Authorization Workflow Timeline</span>
+      </h3>
+
+      <div class="relative pl-6 space-y-6 before:absolute before:left-2.5 before:top-2 before:bottom-2 before:w-0.5 before:bg-slate-700">
+        
+        <!-- Step 1: Application Submitted -->
+        <div class="relative flex items-start space-x-4">
+          <div class="absolute -left-6 top-1 w-5 h-5 rounded-full bg-emerald-500 ring-4 ring-slate-800 flex items-center justify-center text-white text-[10px] font-bold">✓</div>
+          <div class="bg-slate-900/60 p-4 rounded-xl border border-slate-700/60 flex-1 space-y-1 text-xs">
+            <div class="flex items-center justify-between">
+              <span class="font-bold text-white">Application Submitted by Student</span>
+              <span class="text-slate-400 font-mono"><%= od.created_at %></span>
+            </div>
+            <p class="text-slate-300">Submitted by <%= od.student_name %> (<%= od.ra_number %>)</p>
+          </div>
+        </div>
+
+        <!-- Step 2: Class Mentor Review / Escalation -->
+        <div class="relative flex items-start space-x-4">
+          <% if (od.status === 'PENDING' && !od.escalated_at) { %>
+            <div class="absolute -left-6 top-1 w-5 h-5 rounded-full bg-amber-500 ring-4 ring-slate-800 animate-ping"></div>
+            <div class="absolute -left-6 top-1 w-5 h-5 rounded-full bg-amber-500 ring-4 ring-slate-800 flex items-center justify-center text-slate-950 text-[10px] font-bold">●</div>
+          <% } else if (od.escalated_at && od.status === 'PENDING') { %>
+            <div class="absolute -left-6 top-1 w-5 h-5 rounded-full bg-purple-500 ring-4 ring-slate-800 flex items-center justify-center text-white text-[10px] font-bold">↑</div>
+          <% } else { %>
+            <div class="absolute -left-6 top-1 w-5 h-5 rounded-full bg-emerald-500 ring-4 ring-slate-800 flex items-center justify-center text-white text-[10px] font-bold">✓</div>
+          <% } %>
+
+          <div class="bg-slate-900/60 p-4 rounded-xl border border-slate-700/60 flex-1 space-y-2 text-xs">
+            <div class="flex items-center justify-between">
+              <span class="font-bold text-white">Class Mentor Review: <%= od.mentor_name %></span>
+              <% if (od.reviewed_at) { %>
+                <span class="text-slate-400 font-mono"><%= od.reviewed_at %></span>
+              <% } %>
+            </div>
+
+            <% if (od.escalated_at) { %>
+              <div class="p-2.5 bg-amber-500/10 border border-amber-500/20 rounded-lg text-amber-300">
+                ⚠️ <strong>Escalated to Administration:</strong> Mentor escalated request on <%= od.escalated_at %>. Reason: "<%= od.escalation_reason %>"
+              </div>
+            <% } %>
+
+            <% if (od.decided_via === 'MENTOR') { %>
+              <div class="text-slate-300">
+                Decision: <strong class="<%= od.status === 'APPROVED' ? 'text-emerald-400' : 'text-rose-400' %>"><%= od.status %></strong>
+              </div>
+              <% if (od.faculty_remark) { %>
+                <div class="italic text-slate-300">Remark: "<%= od.faculty_remark %>"</div>
+              <% } %>
+            <% } else if (od.status === 'PENDING' && !od.escalated_at) { %>
+              <p class="text-amber-300">Awaiting decision by Class Mentor (<%= od.mentor_name %>)...</p>
+            <% } %>
+          </div>
+        </div>
+
+        <!-- Step 3: Admin Escalation Review (if applicable) -->
+        <% if (od.escalated_at || od.decided_via === 'ADMIN_ESCALATION') { %>
+          <div class="relative flex items-start space-x-4">
+            <% if (od.status === 'APPROVED' || od.status === 'REJECTED') { %>
+              <div class="absolute -left-6 top-1 w-5 h-5 rounded-full bg-emerald-500 ring-4 ring-slate-800 flex items-center justify-center text-white text-[10px] font-bold">✓</div>
+            <% } else { %>
+              <div class="absolute -left-6 top-1 w-5 h-5 rounded-full bg-amber-500 ring-4 ring-slate-800 animate-ping"></div>
+              <div class="absolute -left-6 top-1 w-5 h-5 rounded-full bg-amber-500 ring-4 ring-slate-800 flex items-center justify-center text-slate-950 text-[10px] font-bold">●</div>
+            <% } %>
+
+            <div class="bg-slate-900/60 p-4 rounded-xl border border-slate-700/60 flex-1 space-y-2 text-xs">
+              <div class="flex items-center justify-between">
+                <span class="font-bold text-white">Campus Administration Review</span>
+                <% if (od.reviewed_at && od.decided_via === 'ADMIN_ESCALATION') { %>
+                  <span class="text-slate-400 font-mono"><%= od.reviewed_at %></span>
+                <% } %>
+              </div>
+
+              <% if (od.decided_via === 'ADMIN_ESCALATION') { %>
+                <div class="text-slate-300">
+                  Reviewed by: <span class="font-bold text-white"><%= od.reviewer_name %></span> (Administrator)
+                </div>
+                <div class="text-slate-300">
+                  Outcome: <strong class="<%= od.status === 'APPROVED' ? 'text-emerald-400' : 'text-rose-400' %>"><%= od.status %></strong>
+                </div>
+                <% if (od.faculty_remark) { %>
+                  <div class="italic text-slate-300">Decision Remark: "<%= od.faculty_remark %>"</div>
+                <% } %>
+              <% } else { %>
+                <p class="text-amber-300">Pending review by Campus Administration...</p>
+              <% } %>
+            </div>
+          </div>
+        <% } %>
+
+        <!-- Step 4: Closed status if event cancelled -->
+        <% if (od.status === 'CLOSED') { %>
+          <div class="relative flex items-start space-x-4">
+            <div class="absolute -left-6 top-1 w-5 h-5 rounded-full bg-slate-700 ring-4 ring-slate-800 flex items-center justify-center text-slate-300 text-[10px] font-bold">✕</div>
+            <div class="bg-slate-900/60 p-4 rounded-xl border border-slate-700/60 flex-1 space-y-1 text-xs">
+              <div class="flex items-center justify-between">
+                <span class="font-bold text-slate-300">Auto-Closed by System</span>
+                <span class="text-slate-400 font-mono"><%= od.reviewed_at %></span>
+              </div>
+              <p class="text-slate-400">System Remark: "<%= od.faculty_remark %>"</p>
+            </div>
+          </div>
+        <% } %>
+
+      </div>
+    </div>
+
+  </div>
+
+</div>
