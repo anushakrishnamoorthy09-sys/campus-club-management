@@ -22,7 +22,7 @@ const loginLimiter = rateLimit({
  */
 router.get('/login', attachCsrfToken, (req, res) => {
   if (req.user) {
-    return res.redirect('/');
+    return res.redirect('/dashboard');
   }
   const returnTo = (req.query.returnTo || '').toString();
   res.render('login', {
@@ -46,7 +46,7 @@ router.post('/login', loginLimiter, doubleCsrfProtection, (req, res) => {
     const token = signToken(user.id);
     setAuthCookie(res, token);
 
-    let redirectTarget = '/';
+    let redirectTarget = '/dashboard';
     if (returnTo && typeof returnTo === 'string' && returnTo.startsWith('/') && !returnTo.startsWith('//') && !returnTo.startsWith('/\\')) {
       redirectTarget = returnTo;
     }

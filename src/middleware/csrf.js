@@ -18,6 +18,9 @@ const { doubleCsrfProtection, generateToken } = doubleCsrf({
  * Middleware: Generates a CSRF token for res.locals so EJS forms can render <input type="hidden" name="_csrf" value="<%= csrfToken %>">
  */
 function attachCsrfToken(req, res, next) {
+  if (res.locals.csrfToken) {
+    return next();
+  }
   try {
     const token = generateToken(req, res);
     res.locals.csrfToken = token;
