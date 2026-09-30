@@ -142,20 +142,5 @@ router.post('/club/:clubId/members/assign-role', requireRole('CLUB_ADMIN', 'SUPE
   }
 });
 
-// ============================================================================
-// TEMPORARY GUARDED PROBE ROUTES (For Permission Verification)
-// Note: Evaluates requirePermission against target URL clubId parameter.
-// ============================================================================
-router.get('/club/:clubId/_probe/:permission', (req, res, next) => {
-  const permName = req.params.permission.toUpperCase();
-  const clubId = parseInt(req.params.clubId, 10);
-
-  const scopeResolver = (request) => ({ clubId: parseInt(request.params.clubId, 10) });
-  const guard = requirePermission(permName, scopeResolver);
-
-  guard(req, res, () => {
-    return res.send(`PROBE_GRANTED:${permName}:CLUB_${clubId}`);
-  });
-});
-
 module.exports = router;
+
