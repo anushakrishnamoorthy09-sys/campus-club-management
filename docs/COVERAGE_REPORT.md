@@ -34,16 +34,16 @@ This report provides a status assessment of every system requirement, domain rul
 
 ---
 
-### Key System Highlights & Bonus Features
+### 🌟 Bonus Features Implemented
+1. **Dynamic QR Check-in Terminal**: Short-lived HMAC-SHA256 tokens valid ~60s, auto-refreshing every 20 seconds, with zero open-redirect vulnerabilities.
+2. **Student Portfolio PDF Export**: GET `/student/portfolio.pdf` generates an official vector A4 PDF summarizing student attended events, verified certificates, and earned badges.
+3. **Attendance-Verified OD Flag**: Identifies and visually flags "OD approved but student absent" on Faculty/Admin OD review roster screens.
+4. **Academic-Impact Preview**: Real-time period overlap calculator providing mementos of affected timetable class periods when applying for OD.
 
-1. **Fast Dynamic QR Check-in**:
-   - Short-lived HMAC-SHA256 tokens refreshed automatically every 20 seconds.
-   - Prevents open redirects after student authentication using safe relative URLs.
+---
 
-2. **Verifiable Vector PDF Certificates**:
-   - High-performance A4 landscape certificate generation with embedded verification QR code.
-   - Public rate-limited verification lookup page with masked student RA numbers.
+### ℹ️ Known Limitations & Future Scope
+1. **Google OAuth Client Credentials**: Google Sign-In requires valid `GOOGLE_CLIENT_ID` and `GOOGLE_CLIENT_SECRET` set in `.env` (fallback local login is active for seed accounts).
+2. **Chart.js CDN Dependency**: Analytics charts rely on CDN loading for Chart.js (raw data tables render instantly even if offline).
+3. **Single Active Timetable per Day**: Schema enforces at most one active timetable per day of the week institution-wide.
 
-3. **Academic Impact & OD Turnout Verification**:
-   - Automated period overlap calculation against active timetable specifications.
-   - Flags "OD approved but student absent" on faculty review screens.
