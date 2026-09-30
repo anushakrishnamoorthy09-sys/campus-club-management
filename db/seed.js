@@ -195,10 +195,145 @@ async function seedDatabase() {
       { name: 'Event Organizer', description: 'Awarded for organizing a club event', icon_name: 'briefcase' }
     ];
 
-    const stmtInsertBadge = db.prepare('INSERT INTO badges (club_id, name, description, icon_name) VALUES (NULL, ?, ?, ?)');
-    for (const gb of globalBadges) {
-      stmtInsertBadge.run(gb.name, gb.description, gb.icon_name);
+    // ------------------------------------------------------------------------
+    // 7. EVENTS IN EVERY STATE & SEEDED FLOW DATA
+    // ------------------------------------------------------------------------
+    console.log('[SEED] Creating events in all lifecycle states...');
+    const stmtInsertEvent = db.prepare(`
+      INSERT INTO events (club_id, title, description, event_date, start_time, end_time, venue, capacity, created_by, status, rejection_remark, cancellation_reason)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    `);
+
+    const todayStr = '2026-09-30';
+    const yesterdayStr = '2026-09-29';
+    const tomorrowStr = '2026-10-01';
+
+    // A. DRAFT Event
+    const draftRes = stmtInsertEvent.run(
+      clubId, 'Python Workshop Drafting', 'Internal draft for beginners python class',
+      tomorrowStr, '10:00', '12:00', 'Lab 3', 30, clubAdminId, 'DRAFT', null, null
+    );
+    const draftEventId = draftRes.lastInsertRowid;
+
+    // B. PENDING_APPROVAL Event
+    const pendingRes = stmtInsertEvent.run(
+      clubId, 'AI & ML Hackathon', 'Campus-wide machine learning hackathon',
+      tomorrowStr, '09:00', '17:00', 'Main Auditorium', 100, clubAdminId, 'PENDING_APPROVAL', null, null
+    );
+    const pendingEventId = pendingRes.lastInsertRowid;
+
+    // C. APPROVED Event (Today, later in the day for live demo flow)
+    const approvedRes = stmtInsertEvent.run(
+      clubId, 'Live Coding Bootcamp 2026', 'Interactive live programming session and speed code challenge',
+      todayStr, '14:00', '16:30', 'Seminar Hall A', 50, clubAdminId, 'APPROVED', null, null
+    );
+    const approvedEventId = approvedRes.lastInsertRowid;
+
+    // D. REJECTED Event (with rejection reason)
+    const rejectedRes = stmtInsertEvent.run(
+      clubId, 'Unauthorized Night Hackathon', 'Late evening coding sprint',
+      tomorrowStr, '18:00', '21:00', 'Open Grounds', 40, clubAdminId, 'REJECTED', 'Overnight events are not permitted on weekdays', null
+    );
+
+    // E. COMPLETED Event (Held yesterday, registered while APPROVED, then COMPLETED)
+    const completedRes = stmtInsertEvent.run(
+      clubId, 'Annual Tech Symposium 2026', 'Keynote speeches and research poster presentations',
+      yesterdayStr, '09:00', '13:00', 'Auditorium Hall 1', 150, clubAdminId, 'APPROVED', null, null
+    );
+    const completedEventId = completedRes.lastInsertRowid;
+
+    // F. CANCELLED Event (with cancellation reason)
+    const cancelledRes = stmtInsertEvent.run(
+      clubId, 'C++ Deep Dive Workshop', 'Advanced memory management and metaprogramming',
+      yesterdayStr, '14:00', '16:00', 'Lab 2', 25, clubAdminId, 'CANCELLED', null, 'Guest speaker unavailable'
+    );
+
+    // ------------------------------------------------------------------------
+    // 8. REGISTRATIONS, ATTENDANCE & OD SNAPSHOT
+    // ------------------------------------------------------------------------
+    console.log('[SEED] Seeding event registrations, attendance, and OD request snapshot...');
+    const stmtInsertReg = db.prepare(
+      'INSERT INTO event_registrations (event_id, student_user_id) VALUES (?, ?)'
+    );
+
+    // Registrations for Approved Event (Today)
+    const regApp1 = stmtInsertReg.run(approvedEventId, student1UserId);
+    const regApp2 = stmtInsertReg.run(approvedEventId, student2UserId);
+
+    // Registrations for Completed Event (Registered while APPROVED)
+    const regComp1Res = stmtInsertReg.run(completedEventId, student1UserId);
+    const regComp1Id = regComp1Res.lastInsertRowid;
+
+    const regComp2Res = stmtInsertReg.run(completedEventId, student2UserId);
+    const regComp2Id = regComp2Res.lastInsertRowid;
+
+    // Transition Event 5 from APPROVED to COMPLETED
+    db.prepare("UPDATE events SET status = 'COMPLETED' WHERE id = ?").run(completedEventId);
+
+    // Attendance for Completed Event
+    const stmtInsertAttendance = db.prepare(
+      'INSERT INTO attendance (event_id, student_user_id, status, method, marked_by) VALUES (?, ?, ?, ?, ?)'
+    );
+    stmtInsertAttendance.run(completedEventId, student1UserId, 'PRESENT', 'QR', clubAdminId);
+    stmtInsertAttendance.run(completedEventId, student2UserId, 'ABSENT', 'MANUAL', clubAdminId);
+
+    // Decided OD Request with Snapshot for Student 1 on Completed Event
+    const odRes = db.prepare(`
+      INSERT INTO od_requests (registration_id, student_user_id, class_mentor_id, status, reviewed_by, reviewed_at, faculty_remark, decided_via)
+      VALUES (?, ?, ?, 'APPROVED', ?, datetime('now', '-1 day'), 'Academic approval granted for symposium participation', 'MENTOR')
+    `).run(regComp1Id, student1UserId, faculty1UserId, faculty1UserId);
+    const odId = odRes.lastInsertRowid;
+
+    // OD Period Snapshots
+    const stmtInsertOdPeriod = db.prepare(`
+      INSERT INTO od_request_periods (od_request_id, timetable_id, timetable_name, period_number, period_label, start_time, end_time)
+      VALUES (?, ?, ?, ?, ?, ?, ?)
+    `);
+    stmtInsertOdPeriod.run(odId, ttId, 'Regular Day - 2026', 1, 'Period 1', '08:30', '09:20');
+    stmtInsertOdPeriod.run(odId, ttId, 'Regular Day - 2026', 2, 'Period 2', '09:25', '10:15');
+    stmtInsertOdPeriod.run(odId, ttId, 'Regular Day - 2026', 4, 'Period 3', '10:30', '11:20');
+
+    // ------------------------------------------------------------------------
+    // 9. CERTIFICATE ISSUANCE & BADGES
+    // ------------------------------------------------------------------------
+    console.log('[SEED] Seeding certificates and badges...');
+    const certUuid = 'c0a80101-5678-4321-89ab-cdef01234567';
+    const certHash = 'e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855';
+
+    db.prepare(`
+      INSERT INTO certificates (
+        certificate_uuid, event_id, student_user_id, role_type, verification_hash, issued_by
+      ) VALUES (?, ?, ?, 'PARTICIPANT', ?, ?)
+    `).run(certUuid, completedEventId, student1UserId, certHash, clubAdminId);
+
+    // Club Custom Badge
+    const clubBadgeRes = db.prepare(
+      'INSERT INTO badges (club_id, name, description, icon_name) VALUES (?, ?, ?, ?)'
+    ).run(clubId, 'Top Coder 2026', 'Awarded for exceptional algorithmic problem solving', 'trophy');
+    const clubBadgeId = clubBadgeRes.lastInsertRowid;
+
+    // Award Club Badge & System Badge to Student 1
+    const stmtInsertAward = db.prepare(
+      'INSERT INTO student_badges (badge_id, student_user_id, awarded_by, reason) VALUES (?, ?, ?, ?)'
+    );
+    stmtInsertAward.run(clubBadgeId, student1UserId, clubAdminId, 'Winner of Coding Sprint 2026');
+
+    const firstEventBadge = db.prepare("SELECT id FROM badges WHERE name = 'First Event' AND club_id IS NULL").get();
+    if (firstEventBadge) {
+      stmtInsertAward.run(firstEventBadge.id, student1UserId, clubAdminId, 'Attended first club event');
     }
+
+    // ------------------------------------------------------------------------
+    // 10. IN-APP NOTIFICATIONS
+    // ------------------------------------------------------------------------
+    console.log('[SEED] Generating seed in-app notifications...');
+    const stmtInsertNotif = db.prepare(
+      'INSERT INTO notifications (user_id, title, message, type, is_read) VALUES (?, ?, ?, ?, ?)'
+    );
+    stmtInsertNotif.run(student1UserId, 'Certificate Issued', 'Your certificate for Annual Tech Symposium 2026 is ready for download.', 'CERTIFICATE', 0);
+    stmtInsertNotif.run(student1UserId, 'Badge Awarded!', 'You have been awarded the Top Coder 2026 badge!', 'BADGE', 0);
+    stmtInsertNotif.run(student1UserId, 'OD Approved', 'Your On-Duty request for Annual Tech Symposium 2026 was APPROVED.', 'OD_STATUS', 1);
+    stmtInsertNotif.run(faculty1UserId, 'Event Review Required', 'New event proposal "AI & ML Hackathon" requires your approval.', 'EVENT_SUBMITTED', 0);
   });
 
   // Execute seeding transaction
