@@ -106,64 +106,32 @@ router.get('/dashboard/student', requireRole('STUDENT'), (req, res) => {
   });
 });
 
-/**
- * PLACEHOLDER GUARDED FEATURE SHELLS (To be populated in later phases)
- */
+// Helper redirects for navigation URLs
+router.get('/student/badges', requireRole('STUDENT', 'SUPER_ADMIN', 'ADMIN'), (req, res) => {
+  res.redirect('/student/profile');
+});
 
-
-// Club Admin Shells
+router.get('/club/certificates', requireRole('CLUB_ADMIN', 'SUPER_ADMIN', 'ADMIN'), (req, res) => {
+  if (req.user.role === 'ADMIN' || req.user.role === 'SUPER_ADMIN') {
+    return res.redirect('/admin/certificates');
+  }
+  return res.redirect('/club/events');
+});
 
 router.get('/club/members', requireRole('CLUB_ADMIN', 'SUPER_ADMIN', 'ADMIN'), (req, res) => {
-  res.render('placeholder', {
-    title: 'Club Membership Management - CampusClubOS',
-    featureName: 'Club Member Roster & Approvals',
-    roleRequired: 'CLUB_ADMIN'
-  });
+  if (req.user.role === 'CLUB_ADMIN') {
+    const club = require('../db/index').prepare('SELECT id FROM clubs WHERE club_admin_id = ?').get(req.user.id);
+    if (club) return res.redirect(`/club/${club.id}/roles`);
+  }
+  return res.redirect('/admin/clubs');
 });
 
 router.get('/club/roles', requireRole('CLUB_ADMIN', 'SUPER_ADMIN', 'ADMIN'), (req, res) => {
   if (req.user.role === 'CLUB_ADMIN') {
     const club = require('../db/index').prepare('SELECT id FROM clubs WHERE club_admin_id = ?').get(req.user.id);
-    if (club) {
-      return res.redirect(`/club/${club.id}/roles`);
-    }
+    if (club) return res.redirect(`/club/${club.id}/roles`);
   }
   return res.redirect('/admin/clubs');
-});
-
-router.get('/club/certificates', requireRole('CLUB_ADMIN', 'SUPER_ADMIN', 'ADMIN'), (req, res) => {
-  res.render('placeholder', {
-    title: 'Certificate Issuance - CampusClubOS',
-    featureName: 'Certificate PDF & QR Issuance',
-    roleRequired: 'CLUB_ADMIN'
-  });
-});
-
-router.get('/club/badges', requireRole('CLUB_ADMIN', 'SUPER_ADMIN', 'ADMIN'), (req, res) => {
-  res.render('placeholder', {
-    title: 'Badge Awarding - CampusClubOS',
-    featureName: 'Club Recognition Badges',
-    roleRequired: 'CLUB_ADMIN'
-  });
-});
-
-
-// Student Shells
-
-router.get('/student/certificates', requireRole('STUDENT', 'SUPER_ADMIN', 'ADMIN'), (req, res) => {
-  res.render('placeholder', {
-    title: 'My Certificates - CampusClubOS',
-    featureName: 'Verifiable Certificate Downloads',
-    roleRequired: 'STUDENT'
-  });
-});
-
-router.get('/student/badges', requireRole('STUDENT', 'SUPER_ADMIN', 'ADMIN'), (req, res) => {
-  res.render('placeholder', {
-    title: 'My Badges - CampusClubOS',
-    featureName: 'Personal Achievement Portfolio Badges',
-    roleRequired: 'STUDENT'
-  });
 });
 
 module.exports = router;

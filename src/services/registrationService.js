@@ -95,7 +95,7 @@ function register(eventIdInput, studentUserIdInput) {
 
     const regId = res.lastInsertRowid;
 
-    // Notify student
+    // 1. Notify Student
     createNotification(
       studentUserId,
       'Event Registration Confirmed',
@@ -103,6 +103,49 @@ function register(eventIdInput, studentUserIdInput) {
       'EVENT',
       '/student/my-registrations'
     );
+
+    // Fetch student info for recipient messages
+    const studentUser = db.prepare('SELECT full_name FROM users WHERE id = ?').get(studentUserId);
+    const studentName = studentUser ? studentUser.full_name : `Student (${student.ra_number})`;
+
+    // 2. Notify Club Admin
+    if (event.club_admin_id && Number(event.club_admin_id) !== studentUserId) {
+      createNotification(
+        event.club_admin_id,
+        'New Event Registration',
+        `${studentName} (${student.ra_number}) registered for your event '${event.title}'.`,
+        'EVENT',
+        `/club/events/${eventId}/registrations`
+      );
+    }
+
+    // 3. Notify Faculty Coordinators assigned to the club
+    const coordinators = db.prepare('SELECT faculty_user_id FROM club_coordinators WHERE club_id = ?').all(event.club_id);
+    for (const coord of coordinators) {
+      if (Number(coord.faculty_user_id) !== studentUserId) {
+        createNotification(
+          coord.faculty_user_id,
+          'New Event Registration',
+          `${studentName} (${student.ra_number}) registered for '${event.title}' (${event.club_name}).`,
+          'EVENT',
+          '/faculty/events'
+        );
+      }
+    }
+
+    // 4. Notify Campus Admins
+    const admins = db.prepare("SELECT id FROM users WHERE role IN ('ADMIN', 'SUPER_ADMIN')").all();
+    for (const admin of admins) {
+      if (Number(admin.id) !== studentUserId && Number(admin.id) !== Number(event.club_admin_id)) {
+        createNotification(
+          admin.id,
+          'New Event Registration',
+          `${studentName} (${student.ra_number}) registered for '${event.title}' (${event.club_name}).`,
+          'EVENT',
+          '/admin/events'
+        );
+      }
+    }
 
     logAudit(studentUserId, 'EVENT_REGISTERED', 'event_registrations', regId, {
       eventId,
