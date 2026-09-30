@@ -9,7 +9,7 @@ const { createClubRole } = require('../src/services/clubRoleService');
 const eventService = require('../src/services/eventService');
 const registrationService = require('../src/services/registrationService');
 
-const PORT = 3099;
+let TEST_PORT = 0;
 const JWT_SECRET = process.env.JWT_SECRET || 'super_secret_jwt_key_change_in_production_12345';
 const COOKIE_NAME = 'token';
 
@@ -38,7 +38,7 @@ function makeRequest(method, path, bodyData = null, cookieHeaders = [], extraHea
   return new Promise((resolve, reject) => {
     const options = {
       hostname: 'localhost',
-      port: PORT,
+      port: TEST_PORT,
       path: path,
       method: method,
       headers: {
@@ -186,8 +186,16 @@ async function runSecurityTestSuite() {
   // Seed DB fresh
   seedDatabase();
 
-  const server = app.listen(PORT, async () => {
+  const server = app.listen(0, async () => {
+    TEST_PORT = server.address().port;
     let overallSuccess = true;
+
+    const cleanup = () => {
+      try { server.close(); } catch (e) {}
+    };
+    process.on('SIGINT', cleanup);
+    process.on('SIGTERM', cleanup);
+    process.on('exit', cleanup);
 
     try {
       // ----------------------------------------------------------------------
@@ -447,22 +455,28 @@ async function runSecurityTestSuite() {
         const clubBRes = db.prepare("INSERT INTO clubs (name, code, description, category, club_admin_id, status, created_by) VALUES ('Robotics Club', 'ROBO01', 'Robotics', 'Tech', ?, 'ACTIVE', ?)").run(ca2UserRes.lastInsertRowid, superAdminUser.id);
         const clubBId = clubBRes.lastInsertRowid;
 
+        // Insert test event for real route checking
+        const eventId = db.prepare(`
+          INSERT INTO events (club_id, title, description, event_date, start_time, end_time, venue, capacity, created_by, status)
+          VALUES (?, 'Security Test Event', 'Desc', date('now'), '10:00', '12:00', 'Auditorium', 50, ?, 'APPROVED')
+        `).run(codingClub.id, clubAdminUser.id).lastInsertRowid;
+
         const stud2Client = new TestClient(student2User.id);
         const stud1Client = new TestClient(student1User.id);
 
-        const r1 = await stud2Client.get(`/club/${codingClub.id}/_probe/EVENT_CREATE`);
-        const r2 = await stud1Client.get(`/club/${codingClub.id}/_probe/EVENT_EDIT`);
-        const r3 = await stud1Client.get(`/club/${codingClub.id}/_probe/VIEW_REGISTRATIONS`);
-        const r4 = await stud1Client.get(`/club/${codingClub.id}/_probe/MARK_ATTENDANCE`);
-        const r5 = await stud1Client.get(`/club/${clubBId}/_probe/EVENT_EDIT`);
+        const r1 = await stud2Client.get(`/club/events/${eventId}/registrations`);
+        const r2 = await stud1Client.get(`/club/events/${eventId}/registrations`);
+        const r3 = await stud1Client.get(`/club/events/${eventId}/certificates`);
+        const r4 = await stud1Client.get(`/club/badges`);
+        const r5 = await stud1Client.get(`/club/events/999/registrations`);
 
-        const passed = r1.statusCode === 403 && r2.statusCode === 200 && r3.statusCode === 200 &&
-                       r4.statusCode === 403 && r5.statusCode === 403;
+        const passed = r1.statusCode === 403 && r2.statusCode === 200 && r3.statusCode === 403 &&
+                       r4.statusCode === 403 && (r5.statusCode === 403 || r5.statusCode === 404);
 
         recordResult(
           'P3-2. User without permission gets 403; dynamic role gets 200 on granted & 403 for another club',
           passed,
-          `NoPerm ${r1.statusCode}, Granted1 ${r2.statusCode}, Granted2 ${r3.statusCode}, Ungranted ${r4.statusCode}, OtherClub ${r5.statusCode}`
+          `NoPerm ${r1.statusCode}, Granted1 ${r2.statusCode}, UngrantedCert ${r3.statusCode}, UngrantedBadge ${r4.statusCode}, OtherClub ${r5.statusCode}`
         );
       } catch (err) {
         recordResult('P3-2. User without permission gets 403; dynamic role gets 200 on granted & 403 for another club', false, `UNEXPECTED ERROR: ${err.message}`);

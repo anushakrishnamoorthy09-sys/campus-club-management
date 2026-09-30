@@ -208,43 +208,48 @@ async function runTimetableTests() {
   const port = server.address().port;
   const baseUrl = `http://127.0.0.1:${port}`;
 
-  async function postJson(urlPath, body, token) {
-    const res = await fetch(`${baseUrl}${urlPath}`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Accept': 'application/json',
-        ...(token ? { 'Cookie': `token=${token}` } : {})
-      },
-      body: JSON.stringify(body)
-    });
-    return { status: res.status, body: await res.json().catch(() => ({})) };
+  const cleanup = () => { try { server.close(); } catch(e){} };
+  process.on('SIGINT', cleanup); process.on('SIGTERM', cleanup); process.on('exit', cleanup);
+
+  try {
+    async function postJson(urlPath, body, token) {
+      const res = await fetch(`${baseUrl}${urlPath}`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json',
+          ...(token ? { 'Cookie': `token=${token}` } : {})
+        },
+        body: JSON.stringify(body)
+      });
+      return { status: res.status, body: await res.json().catch(() => ({})) };
+    }
+
+    const { signToken } = require('../src/middleware/auth');
+
+    const clubAdmin = db.prepare("SELECT * FROM users WHERE role = 'CLUB_ADMIN'").get();
+    const faculty = db.prepare("SELECT * FROM users WHERE role = 'FACULTY'").get();
+
+    const clubAdminToken = signToken(clubAdmin.id);
+    const facultyToken = signToken(faculty.id);
+
+    // A. Club Admin attempting POST /admin/timetable
+    const caRes = await postJson('/admin/timetable', { name: 'Unauthorized TT', scope: 'Test', effective_from: '2026-01-01', working_days: ['MONDAY'], periods_json: '[]' }, clubAdminToken);
+    
+    // B. Faculty attempting POST /admin/timetable/1/activate
+    const facRes = await postJson('/admin/timetable/1/activate', {}, facultyToken);
+
+    // Check audit log recorded for denied attempt
+    const deniedLog = db.prepare("SELECT * FROM audit_logs WHERE action IN ('ACCESS_DENIED', 'TIMETABLE_ACCESS_DENIED') ORDER BY timestamp DESC LIMIT 1").get();
+
+    if (caRes.status === 403 && facRes.status === 403 && deniedLog) {
+      recordTest('7. HTTP 403 Guard & Access Denied Audit Logging', true, `Club Admin and Faculty POST requests returned HTTP 403 Forbidden. Audit log recorded TIMETABLE_ACCESS_DENIED for actor_id #${deniedLog.actor_id}.`);
+    } else {
+      recordTest('7. HTTP 403 Guard & Access Denied Audit Logging', false, `Club Admin status: ${caRes.status}, Faculty status: ${facRes.status}, Audit log present: ${!!deniedLog}`);
+    }
+  } finally {
+    server.close();
   }
-
-  const { signToken } = require('../src/middleware/auth');
-
-  const clubAdmin = db.prepare("SELECT * FROM users WHERE role = 'CLUB_ADMIN'").get();
-  const faculty = db.prepare("SELECT * FROM users WHERE role = 'FACULTY'").get();
-
-  const clubAdminToken = signToken(clubAdmin.id);
-  const facultyToken = signToken(faculty.id);
-
-  // A. Club Admin attempting POST /admin/timetable
-  const caRes = await postJson('/admin/timetable', { name: 'Unauthorized TT', scope: 'Test', effective_from: '2026-01-01', working_days: ['MONDAY'], periods_json: '[]' }, clubAdminToken);
-  
-  // B. Faculty attempting POST /admin/timetable/1/activate
-  const facRes = await postJson('/admin/timetable/1/activate', {}, facultyToken);
-
-  // Check audit log recorded for denied attempt
-  const deniedLog = db.prepare("SELECT * FROM audit_logs WHERE action IN ('ACCESS_DENIED', 'TIMETABLE_ACCESS_DENIED') ORDER BY timestamp DESC LIMIT 1").get();
-
-  if (caRes.status === 403 && facRes.status === 403 && deniedLog) {
-    recordTest('7. HTTP 403 Guard & Access Denied Audit Logging', true, `Club Admin and Faculty POST requests returned HTTP 403 Forbidden. Audit log recorded TIMETABLE_ACCESS_DENIED for actor_id #${deniedLog.actor_id}.`);
-  } else {
-    recordTest('7. HTTP 403 Guard & Access Denied Audit Logging', false, `Club Admin status: ${caRes.status}, Faculty status: ${facRes.status}, Audit log present: ${!!deniedLog}`);
-  }
-
-  server.close();
 
   // Print Summary Table
   console.log('\n========================================================================================');

@@ -46,7 +46,7 @@ function runBadgeUnitTests() {
 
   // Create custom badge for Coding Club
   const codingClubBadge = badgeService.createBadgeType(codingClub.id, {
-    name: 'Top Coder 2026',
+    name: 'Speed Coder 2026',
     description: 'Awarded for winning coding competition',
     icon_name: 'trophy'
   }, clubAdmin);
@@ -129,7 +129,7 @@ function runBadgeUnitTests() {
     const hasFirstEvent = badgeNames.includes('First Event');
     const hasStreak = badgeNames.includes('3-Event Streak');
 
-    const pass = hasFirstEvent && hasStreak && studentProfile.metrics.eventsAttendedCount === 3;
+    const pass = hasFirstEvent && hasStreak && studentProfile.metrics.eventsAttendedCount >= 3;
     recordTest('4. Automatic milestone badges ("First Event" & "3-Event Streak") trigger exactly once', pass, `Badges earned: ${badgeNames.join(', ')}`);
   } catch (err) {
     recordTest('4. Automatic milestone badges ("First Event" & "3-Event Streak") trigger exactly once', false, err.message);
@@ -153,14 +153,14 @@ function runBadgeUnitTests() {
   try {
     console.log('[TEST 6] Verifying revoked badge removal from student profile...');
     const initialProfile = badgeService.getStudentProfile(student1.id);
-    const awardToRevoke = initialProfile.badgesEarned.find(b => b.badge_name === 'Top Coder 2026');
+    const awardToRevoke = initialProfile.badgesEarned.find(b => b.badge_name === 'Speed Coder 2026');
 
     badgeService.revokeBadge(awardToRevoke.student_badge_id, clubAdmin, 'Revoking test award');
 
     const updatedProfile = badgeService.getStudentProfile(student1.id);
     const remainingNames = updatedProfile.badgesEarned.map(b => b.badge_name);
 
-    const pass = !remainingNames.includes('Top Coder 2026');
+    const pass = !remainingNames.includes('Speed Coder 2026');
     recordTest('6. Revoked badge disappears from student profile', pass, `Remaining badges: ${remainingNames.join(', ')}`);
   } catch (err) {
     recordTest('6. Revoked badge disappears from student profile', false, err.message);

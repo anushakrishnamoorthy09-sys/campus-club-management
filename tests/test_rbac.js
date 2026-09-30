@@ -3,7 +3,7 @@ const app = require('../src/app');
 const db = require('../src/db/index');
 const jwt = require('jsonwebtoken');
 
-const PORT = 3055;
+let TEST_PORT = 0;
 const JWT_SECRET = process.env.JWT_SECRET || 'super_secret_jwt_key_change_in_production_12345';
 const COOKIE_NAME = 'token';
 
@@ -12,7 +12,7 @@ function makeGetRequest(path, cookieHeader = null) {
   return new Promise((resolve, reject) => {
     const options = {
       hostname: 'localhost',
-      port: PORT,
+      port: TEST_PORT,
       path: path,
       method: 'GET',
       headers: {
@@ -56,7 +56,10 @@ async function runRbacTests() {
   console.log('                          RBAC AUTHORIZATION DEMONSTRATION                              ');
   console.log('========================================================================================\n');
 
-  const server = app.listen(PORT, async () => {
+  const server = app.listen(0, async () => {
+    TEST_PORT = server.address().port;
+    const cleanup = () => { try { server.close(); } catch(e){} };
+    process.on('SIGINT', cleanup); process.on('SIGTERM', cleanup); process.on('exit', cleanup);
     try {
       // 1. Logged-out access to /dashboard
       console.log('TEST 1: Unauthenticated request to GET /dashboard');

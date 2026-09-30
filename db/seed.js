@@ -195,6 +195,11 @@ async function seedDatabase() {
       { name: 'Event Organizer', description: 'Awarded for organizing a club event', icon_name: 'briefcase' }
     ];
 
+    const stmtInsertGlobalBadge = db.prepare('INSERT INTO badges (club_id, name, description, icon_name) VALUES (NULL, ?, ?, ?)');
+    for (const gb of globalBadges) {
+      stmtInsertGlobalBadge.run(gb.name, gb.description, gb.icon_name);
+    }
+
     // ------------------------------------------------------------------------
     // 7. EVENTS IN EVERY STATE & SEEDED FLOW DATA
     // ------------------------------------------------------------------------

@@ -4,7 +4,7 @@ const app = require('../src/app');
 const db = require('../src/db/index');
 const { seedDatabase } = require('../db/seed');
 
-const PORT = 3058;
+let TEST_PORT = 0;
 const JWT_SECRET = process.env.JWT_SECRET || 'super_secret_jwt_key_change_in_production_12345';
 const COOKIE_NAME = 'token';
 
@@ -12,7 +12,7 @@ function makeRequest(method, path, bodyData = null, cookieHeaders = [], isJson =
   return new Promise((resolve, reject) => {
     const options = {
       hostname: 'localhost',
-      port: PORT,
+      port: TEST_PORT,
       path: path,
       method: method,
       headers: {
@@ -67,7 +67,10 @@ async function runAccountAndClubTests() {
 
   seedDatabase();
 
-  const server = app.listen(PORT, async () => {
+  const server = app.listen(0, async () => {
+    TEST_PORT = server.address().port;
+    const cleanup = () => { try { server.close(); } catch(e){} };
+    process.on('SIGINT', cleanup); process.on('SIGTERM', cleanup); process.on('exit', cleanup);
     try {
       const superAdminUser = db.prepare("SELECT id FROM users WHERE role = 'SUPER_ADMIN'").get();
       const adminUser = db.prepare("SELECT id FROM users WHERE role = 'ADMIN'").get();
