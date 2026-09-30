@@ -9,7 +9,7 @@
     "db:reset": "node db/seed.js",
     "routes": "node scripts/list_routes.js",
     "test:security": "node scripts/test_security.js",
-    "test:unit": "node tests/test_timetable_module.js && node tests/test_event_domain.js && node tests/test_od_module.js && node tests/test_attendance_domain.js && node tests/test_qr_attendance.js && node tests/test_certificate_module.js && node tests/test_badge_module.js && node tests/test_analytics_module.js"
+    "test:unit": "node tests/test_timetable_module.js && node tests/test_event_domain.js && node tests/test_od_module.js && node tests/test_attendance_domain.js && node tests/test_qr_attendance.js && node tests/test_certificate_module.js && node tests/test_badge_module.js && node tests/test_analytics_module.js && node tests/test_messaging_module.js"
   },
   "dependencies": {
     "bcrypt": "^5.1.1",

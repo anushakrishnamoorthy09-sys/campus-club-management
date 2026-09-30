@@ -21,6 +21,7 @@ const notificationRoutes = require('./routes/notificationRoutes');
 const certificateRoutes = require('./routes/certificateRoutes');
 const badgeRoutes = require('./routes/badgeRoutes');
 const analyticsRoutes = require('./routes/analyticsRoutes');
+const messageRoutes = require('./routes/messageRoutes');
 
 const app = express();
 
@@ -85,6 +86,7 @@ app.use('/', notificationRoutes);
 app.use('/', certificateRoutes);
 app.use('/', badgeRoutes);
 app.use('/', analyticsRoutes);
+app.use('/', messageRoutes);
 
 // 8. Base & Health Routes
 app.get('/', (req, res) => {

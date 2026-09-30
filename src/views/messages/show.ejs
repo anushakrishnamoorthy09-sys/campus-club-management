@@ -1,0 +1,118 @@
+<div class="max-w-5xl mx-auto py-6 px-4 sm:px-6 lg:px-8 space-y-4">
+  <!-- Header & Back Navigation -->
+  <div class="flex items-center justify-between">
+    <a href="/messages" class="inline-flex items-center text-sm font-semibold text-indigo-600 dark:text-indigo-400 hover:underline">
+      &larr; Back to Messages Inbox
+    </a>
+    <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold <%= thread.context_type === 'EVENT' ? 'bg-indigo-100 text-indigo-800 dark:bg-indigo-900/50 dark:text-indigo-300' : thread.context_type === 'OD_REQUEST' ? 'bg-amber-100 text-amber-800 dark:bg-amber-900/50 dark:text-amber-300' : 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900/50 dark:text-emerald-300' %>">
+      <%= thread.context_type %> THREAD
+    </span>
+  </div>
+
+  <!-- Top Context Summary Banner -->
+  <% if (contextSummary) { %>
+    <div class="bg-slate-50 dark:bg-slate-800/80 rounded-xl p-4 border border-slate-200 dark:border-slate-700 shadow-sm flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+      <div>
+        <% if (contextSummary.type === 'EVENT') { %>
+          <h2 class="text-lg font-extrabold text-slate-900 dark:text-white">Event Context: <%= contextSummary.title %></h2>
+          <p class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">Club: <span class="font-semibold text-slate-700 dark:text-slate-300"><%= contextSummary.clubName %></span> &bull; Venue: <%= contextSummary.venue %> &bull; Date: <%= contextSummary.date %></p>
+        <% } else if (contextSummary.type === 'OD_REQUEST') { %>
+          <h2 class="text-lg font-extrabold text-slate-900 dark:text-white">OD Context: <%= contextSummary.studentName %> (<%= contextSummary.raNumber %>)</h2>
+          <p class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">Event: <span class="font-semibold text-slate-700 dark:text-slate-300"><%= contextSummary.eventTitle %></span> &bull; Status: <span class="font-bold uppercase"><%= contextSummary.status %></span></p>
+        <% } %>
+      </div>
+      <div>
+        <% if (contextSummary.type === 'EVENT') { %>
+          <a href="/club/events/<%= contextSummary.id %>" class="text-xs font-bold text-indigo-600 dark:text-indigo-400 hover:underline">View Event Details &rarr;</a>
+        <% } else if (contextSummary.type === 'OD_REQUEST') { %>
+          <a href="/faculty/od/<%= contextSummary.id %>" class="text-xs font-bold text-indigo-600 dark:text-indigo-400 hover:underline">View OD Application &rarr;</a>
+        <% } %>
+      </div>
+    </div>
+  <% } %>
+
+  <!-- Chat Messages Container -->
+  <div class="bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 shadow-sm flex flex-col h-[520px]">
+    <!-- Chat Header -->
+    <div class="p-4 border-b border-slate-200 dark:border-slate-700 bg-slate-50/50 dark:bg-slate-800">
+      <h3 class="font-bold text-slate-900 dark:text-white text-base"><%= thread.title %></h3>
+    </div>
+
+    <!-- Message Timeline -->
+    <div id="messageTimeline" class="flex-1 p-4 overflow-y-auto space-y-4">
+      <% if (!messages || messages.length === 0) { %>
+        <div class="text-center py-12 text-slate-400 text-sm">
+          No messages in this thread yet. Type your message below to start the conversation.
+        </div>
+      <% } else { %>
+        <% messages.forEach(m => { %>
+          <% const isSelf = m.sender_id === user.id; %>
+          <div class="flex flex-col <%= isSelf ? 'items-end' : 'items-start' %>">
+            <div class="flex items-center space-x-2 mb-1">
+              <span class="text-xs font-bold text-slate-700 dark:text-slate-300"><%= m.sender_name %></span>
+              <span class="text-[10px] text-slate-400 font-mono"><%= new Date(m.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) %></span>
+            </div>
+            <div class="max-w-md px-4 py-2.5 rounded-2xl text-sm shadow-xs <%= isSelf ? 'bg-indigo-600 text-white rounded-tr-none' : 'bg-slate-100 dark:bg-slate-700 text-slate-900 dark:text-white rounded-tl-none border border-slate-200 dark:border-slate-600' %>">
+              <%- m.message_text_escaped %>
+            </div>
+          </div>
+        <% }); %>
+      <% } %>
+    </div>
+
+    <!-- Message Input Form -->
+    <div class="p-4 border-t border-slate-200 dark:border-slate-700 bg-slate-50/50 dark:bg-slate-800">
+      <form id="messageForm" method="POST" action="/messages/<%= thread.id %>" class="flex items-center space-x-3">
+        <% if (typeof csrfToken !== 'undefined' && csrfToken) { %>
+          <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+        <% } %>
+        <input type="text" id="messageText" name="text" required maxlength="2000" placeholder="Type your message (max 2000 characters)..." class="flex-1 rounded-xl border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-900 text-slate-900 dark:text-white text-sm px-4 py-2.5 shadow-sm focus:ring-2 focus:ring-indigo-500">
+        <button type="submit" class="inline-flex items-center px-5 py-2.5 rounded-xl text-sm font-bold bg-indigo-600 hover:bg-indigo-700 text-white shadow-sm transition-colors">
+          Send
+        </button>
+      </form>
+    </div>
+  </div>
+</div>
+
+<script>
+  document.addEventListener('DOMContentLoaded', () => {
+    const timeline = document.getElementById('messageTimeline');
+    if (timeline) {
+      timeline.scrollTop = timeline.scrollHeight;
+    }
+
+    // Polling every 10 seconds for new messages
+    setInterval(async () => {
+      try {
+        const res = await fetch('/messages/<%= thread.id %>', {
+          headers: { 'Accept': 'application/json' }
+        });
+        if (res.ok) {
+          const data = await res.json();
+          if (data.messages) {
+            let html = '';
+            data.messages.forEach(m => {
+              const isSelf = m.sender_id === <%= user.id %>;
+              const timeStr = new Date(m.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+              html += `
+                <div class="flex flex-col ${isSelf ? 'items-end' : 'items-start'}">
+                  <div class="flex items-center space-x-2 mb-1">
+                    <span class="text-xs font-bold text-slate-700 dark:text-slate-300">${m.sender_name}</span>
+                    <span class="text-[10px] text-slate-400 font-mono">${timeStr}</span>
+                  </div>
+                  <div class="max-w-md px-4 py-2.5 rounded-2xl text-sm shadow-xs ${isSelf ? 'bg-indigo-600 text-white rounded-tr-none' : 'bg-slate-100 dark:bg-slate-700 text-slate-900 dark:text-white rounded-tl-none border border-slate-200 dark:border-slate-600'}">
+                    ${m.message_text_escaped}
+                  </div>
+                </div>
+              `;
+            });
+            timeline.innerHTML = html;
+          }
+        }
+      } catch (err) {
+        console.error('Polling error:', err);
+      }
+    }, 10000);
+  });
+</script>

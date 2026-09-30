@@ -1,0 +1,52 @@
+<div class="max-w-6xl mx-auto py-6 px-4 sm:px-6 lg:px-8 space-y-6">
+  <!-- Header -->
+  <div class="flex items-center justify-between border-b pb-5 border-slate-200 dark:border-slate-700">
+    <div>
+      <h1 class="text-3xl font-extrabold text-slate-900 dark:text-white tracking-tight">Communication Threads</h1>
+      <p class="text-sm text-slate-500 dark:text-slate-400 mt-1">Authorized contextual discussions for Events, On-Duty requests, and Direct Faculty messages.</p>
+    </div>
+    <div>
+      <a href="/messages/new" class="inline-flex items-center px-4 py-2 rounded-lg text-sm font-semibold bg-indigo-600 hover:bg-indigo-700 text-white shadow-sm transition-colors">
+        + New Direct Message
+      </a>
+    </div>
+  </div>
+
+  <!-- Threads Inbox Table / Cards -->
+  <div class="bg-white dark:bg-slate-800 rounded-xl shadow-sm border border-slate-200 dark:border-slate-700 overflow-hidden">
+    <% if (!threads || threads.length === 0) { %>
+      <div class="p-12 text-center bg-slate-50 dark:bg-slate-900/40">
+        <svg class="w-12 h-12 text-slate-400 mx-auto mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 4.418 9 8z"/></svg>
+        <p class="text-slate-600 dark:text-slate-300 font-bold text-lg">No Active Communication Threads</p>
+        <p class="text-slate-500 dark:text-slate-400 text-sm mt-1">Click "Discuss" on an Event or OD Request detail page, or start a new Direct Message.</p>
+      </div>
+    <% } else { %>
+      <ul class="divide-y divide-slate-200 dark:divide-slate-700">
+        <% threads.forEach(t => { %>
+          <li>
+            <a href="/messages/<%= t.id %>" class="block p-5 hover:bg-slate-50 dark:hover:bg-slate-700/40 transition-colors">
+              <div class="flex items-center justify-between mb-2">
+                <div class="flex items-center space-x-3">
+                  <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold <%= t.context_type === 'EVENT' ? 'bg-indigo-100 text-indigo-800 dark:bg-indigo-900/50 dark:text-indigo-300' : t.context_type === 'OD_REQUEST' ? 'bg-amber-100 text-amber-800 dark:bg-amber-900/50 dark:text-amber-300' : 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900/50 dark:text-emerald-300' %>">
+                    <%= t.context_type %>
+                  </span>
+                  <h3 class="text-base font-bold text-slate-900 dark:text-white"><%= t.title %></h3>
+                </div>
+                <span class="text-xs text-slate-400">
+                  <%= t.last_message_at ? new Date(t.last_message_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : new Date(t.created_at).toLocaleDateString() %>
+                </span>
+              </div>
+              <p class="text-sm text-slate-600 dark:text-slate-400 line-clamp-1">
+                <% if (t.last_sender_name) { %>
+                  <span class="font-semibold text-slate-800 dark:text-slate-200"><%= t.last_sender_name %>:</span> <%= t.last_message_text_escaped %>
+                <% } else { %>
+                  <span class="italic text-slate-400">No messages sent yet.</span>
+                <% } %>
+              </p>
+            </a>
+          </li>
+        <% }); %>
+      </ul>
+    <% } %>
+  </div>
+</div>

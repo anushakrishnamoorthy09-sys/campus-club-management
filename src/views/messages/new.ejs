@@ -1,0 +1,36 @@
+<div class="max-w-xl mx-auto py-8 px-4 sm:px-6 lg:px-8 space-y-6">
+  <!-- Header & Back Navigation -->
+  <div>
+    <a href="/messages" class="inline-flex items-center text-sm font-semibold text-indigo-600 dark:text-indigo-400 hover:underline mb-2">
+      &larr; Back to Messages Inbox
+    </a>
+    <h1 class="text-2xl font-extrabold text-slate-900 dark:text-white tracking-tight">New Direct Message</h1>
+    <p class="text-xs text-slate-500 dark:text-slate-400 mt-1">Select an eligible user pair (Faculty &bull; Faculty or Faculty &bull; Club Admin) to start a thread.</p>
+  </div>
+
+  <div class="bg-white dark:bg-slate-800 rounded-xl p-6 shadow-sm border border-slate-200 dark:border-slate-700">
+    <form method="POST" action="/messages/new" class="space-y-4">
+      <% if (typeof csrfToken !== 'undefined' && csrfToken) { %>
+        <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+      <% } %>
+
+      <div>
+        <label for="targetUserId" class="block text-sm font-bold text-slate-700 dark:text-slate-300 mb-1">Select Recipient:</label>
+        <select id="targetUserId" name="targetUserId" required class="w-full rounded-lg border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-900 dark:text-white text-sm p-3 shadow-sm focus:ring-indigo-500 focus:border-indigo-500">
+          <option value="">-- Choose Recipient --</option>
+          <% if (targets && targets.length > 0) { %>
+            <% targets.forEach(t => { %>
+              <option value="<%= t.id %>"><%= t.full_name %> (<%= t.role %> &bull; <%= t.email %>)</option>
+            <% }); %>
+          <% } %>
+        </select>
+      </div>
+
+      <div class="pt-2">
+        <button type="submit" class="w-full py-3 px-4 rounded-xl font-bold text-white bg-indigo-600 hover:bg-indigo-700 shadow-sm transition-colors text-sm">
+          Start Direct Conversation
+        </button>
+      </div>
+    </form>
+  </div>
+</div>
